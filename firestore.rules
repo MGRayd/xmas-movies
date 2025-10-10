@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && request.auth.token.admin == true; }
+    function isPublished() { return resource.data.published == true; }
+
+    // Public can read published docs or search, admins can read all; only admins can write
+    match /{collection}/{document} {
+      // Allow reading for search functionality
+      allow read: if isPublished() || isAdmin() || collection in ['sessions', 'npcs', 'monsters', 'locations', 'characters'];
+      allow write: if isAdmin();
+    }
+    
+    // Special rule for roles collection
+    match /roles/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if isAdmin();
+    }
+  }
+}
