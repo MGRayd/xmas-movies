@@ -12,6 +12,12 @@ export default function ThreadList() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<ThreadStatus | 'all'>('all');
+  
+  // Sort options
+  type SortOption = 'updatedAt' | 'createdAt' | 'title';
+  type SortDirection = 'asc' | 'desc';
+  const [sortBy, setSortBy] = useState<SortOption>('updatedAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   useEffect(() => {
     let cancelled = false;
@@ -26,12 +32,12 @@ export default function ThreadList() {
         
         // Build query based on admin status and filters
         if (safeIsAdmin) {
-          threadsQuery = query(threadsRef, orderBy("updatedAt", "desc"));
+          // Only apply server-side ordering for updatedAt to avoid conflicting with client-side sorting
+          threadsQuery = query(threadsRef);
         } else {
           threadsQuery = query(
             threadsRef, 
-            where("published", "==", true),
-            orderBy("updatedAt", "desc")
+            where("published", "==", true)
           );
         }
         
@@ -46,6 +52,21 @@ export default function ThreadList() {
         if (statusFilter !== 'all') {
           docs = docs.filter(thread => thread.status === statusFilter);
         }
+        
+        // Apply client-side sorting
+        docs = docs.sort((a, b) => {
+          if (sortBy === 'title') {
+            // String comparison for title
+            const comparison = a.title.localeCompare(b.title);
+            return sortDirection === 'asc' ? comparison : -comparison;
+          } else {
+            // Date comparison for timestamps
+            const aValue = a[sortBy]?.toDate?.() || new Date(0);
+            const bValue = b[sortBy]?.toDate?.() || new Date(0);
+            const comparison = aValue.getTime() - bValue.getTime();
+            return sortDirection === 'asc' ? comparison : -comparison;
+          }
+        });
 
         if (!cancelled) {
           setThreads(docs);
@@ -63,7 +84,7 @@ export default function ThreadList() {
     return () => {
       cancelled = true;
     };
-  }, [safeIsAdmin, statusFilter]);
+  }, [safeIsAdmin, statusFilter, sortBy, sortDirection]);
 
   // Status badge renderer
   const renderStatusBadge = (status: ThreadStatus) => {
@@ -102,7 +123,28 @@ export default function ThreadList() {
             </div>
           </div>
 
-          {/* Status filter only */}
+          {/* Sort options */}
+          <div className="form-control">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="label-text text-sm whitespace-nowrap">Sort by:</label>
+              <select
+                className="select select-bordered select-sm"
+                value={`${sortBy}-${sortDirection}`}
+                onChange={(e) => {
+                  const [field, direction] = e.target.value.split('-');
+                  setSortBy(field as SortOption);
+                  setSortDirection(direction as SortDirection);
+                }}
+              >
+                <option value="updatedAt-desc">Last Updated (Newest)</option>
+                <option value="updatedAt-asc">Last Updated (Oldest)</option>
+                <option value="createdAt-desc">Date Created (Newest)</option>
+                <option value="createdAt-asc">Date Created (Oldest)</option>
+                <option value="title-asc">Title (A-Z)</option>
+                <option value="title-desc">Title (Z-A)</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 

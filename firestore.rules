@@ -8,7 +8,7 @@ service cloud.firestore {
     // Public can read published docs or search, admins can read all; only admins can write
     match /{collection}/{document} {
       // Allow reading for search functionality
-      allow read: if isPublished() || isAdmin() || collection in ['sessions', 'npcs', 'monsters', 'locations', 'characters'];
+      allow read: if isPublished() || isAdmin() || collection in ['sessions', 'npcs', 'monsters', 'locations', 'characters', 'threads'];
       allow write: if isAdmin();
     }
     
