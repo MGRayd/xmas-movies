@@ -24,6 +24,7 @@ import CharacterEditor from './components/admin/characters/CharacterEditor'
 import ThreadEditor from './components/admin/threads/ThreadEditor'
 import PlayerCharacterManager from './components/admin/playerCharacters/PlayerCharacterManager'
 import SettingsManager from './components/admin/settings/SettingsManager'
+import AllowlistManager from './admin/AllowlistManager'
 
 const router = createBrowserRouter([
   { element: <AppLayout />, children: [
@@ -77,6 +78,9 @@ const router = createBrowserRouter([
 
     // Settings
     { path: '/admin/settings', element: <SettingsManager /> },
+
+    // Allowlist
+    { path: '/admin/allowlist', element: <AllowlistManager /> },
   ] }
 ])
 

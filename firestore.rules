@@ -17,5 +17,11 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if isAdmin();
     }
+    
+    // Special rule for allowlist collection - only admins can read/write
+    match /allowlist/{emailHash} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
   }
 }

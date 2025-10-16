@@ -1,0 +1,22 @@
+[debug] [2025-10-16T16:11:36.893Z] ----------------------------------------------------------------------
+[debug] [2025-10-16T16:11:36.895Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\markj\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2025-10-16T16:11:36.896Z] CLI Version:   14.19.1
+[debug] [2025-10-16T16:11:36.896Z] Platform:      win32
+[debug] [2025-10-16T16:11:36.896Z] Node Version:  v22.20.0
+[debug] [2025-10-16T16:11:36.896Z] Time:          Thu Oct 16 2025 17:11:36 GMT+0100 (British Summer Time)
+[debug] [2025-10-16T16:11:36.896Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-16T16:11:37.053Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-16T16:11:37.054Z] > authorizing via signed-in user (mgdeadi19@gmail.com)
+[debug] [2025-10-16T16:11:37.054Z] [iam] checking project terraveil-journal for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-10-16T16:11:37.055Z] Checked if tokens are valid: true, expires at: 1760633597429
+[debug] [2025-10-16T16:11:37.055Z] Checked if tokens are valid: true, expires at: 1760633597429
+[debug] [2025-10-16T16:11:37.056Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/terraveil-journal:testIamPermissions [none]
+[debug] [2025-10-16T16:11:37.056Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/terraveil-journal:testIamPermissions x-goog-quota-user=projects/terraveil-journal
+[debug] [2025-10-16T16:11:37.056Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/terraveil-journal:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-10-16T16:11:37.685Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/terraveil-journal:testIamPermissions 200
+[debug] [2025-10-16T16:11:37.685Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/terraveil-journal:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-10-16T16:11:37.685Z] Checked if tokens are valid: true, expires at: 1760633597429
+[debug] [2025-10-16T16:11:37.685Z] Checked if tokens are valid: true, expires at: 1760633597429
+[debug] [2025-10-16T16:11:37.685Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/terraveil-journal/serviceAccounts/terraveil-journal@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-10-16T16:11:37.686Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/terraveil-journal/serviceAccounts/terraveil-journal@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
