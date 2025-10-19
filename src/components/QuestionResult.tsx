@@ -103,8 +103,8 @@ const QuestionResult: React.FC<QuestionResultProps> = ({
       {/* Status indicator */}
       <div className="mt-3 flex justify-end">
         {isCorrect ? (
-          <span className={`px-3 py-1 rounded-full text-sm ${isAlternativeMatch ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
-            {isAlternativeMatch ? 'Correct (Alternative)' : 'Correct'}
+          <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+            Correct
           </span>
         ) : (
           <span className="px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">

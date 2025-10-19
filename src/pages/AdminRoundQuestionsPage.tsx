@@ -6,6 +6,7 @@ import { db, storage } from '../firebase';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 import HoverImage from '../components/HoverImage';
 import { Question, Round, RoundType } from '../types/quiz';
+import { processImageFile } from '../utils/imageUtils';
 
 const AdminRoundQuestionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -94,48 +95,77 @@ const AdminRoundQuestionsPage: React.FC = () => {
     }
   }, [isAdmin, roundId]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, imageType: 'main' | 'blanked' | 'normal' | 'cover') => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, imageType: 'main' | 'blanked' | 'normal' | 'cover') => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Set the appropriate file and preview based on image type
-    switch (imageType) {
-      case 'main':
-        setImageFile(file);
-        // Create preview
-        const mainReader = new FileReader();
-        mainReader.onloadend = () => {
-          setImagePreview(mainReader.result as string);
-        };
-        mainReader.readAsDataURL(file);
-        break;
-      case 'blanked':
-        setBlankedImageFile(file);
-        // Create preview
-        const blankedReader = new FileReader();
-        blankedReader.onloadend = () => {
-          setBlankedImagePreview(blankedReader.result as string);
-        };
-        blankedReader.readAsDataURL(file);
-        break;
-      case 'normal':
-        setNormalImageFile(file);
-        // Create preview
-        const normalReader = new FileReader();
-        normalReader.onloadend = () => {
-          setNormalImagePreview(normalReader.result as string);
-        };
-        normalReader.readAsDataURL(file);
-        break;
-      case 'cover':
-        setCoverImageFile(file);
-        // Create preview
-        const coverReader = new FileReader();
-        coverReader.onloadend = () => {
-          setCoverImagePreview(coverReader.result as string);
-        };
-        coverReader.readAsDataURL(file);
-        break;
+    try {
+      // Convert image to WebP format
+      const processedFile = await processImageFile(file, 0.85);
+      
+      // Set the appropriate file and preview based on image type
+      switch (imageType) {
+        case 'main':
+          setImageFile(processedFile);
+          // Create preview
+          const mainReader = new FileReader();
+          mainReader.onloadend = () => {
+            setImagePreview(mainReader.result as string);
+          };
+          mainReader.readAsDataURL(processedFile);
+          break;
+        case 'blanked':
+          setBlankedImageFile(processedFile);
+          // Create preview
+          const blankedReader = new FileReader();
+          blankedReader.onloadend = () => {
+            setBlankedImagePreview(blankedReader.result as string);
+          };
+          blankedReader.readAsDataURL(processedFile);
+          break;
+        case 'normal':
+          setNormalImageFile(processedFile);
+          // Create preview
+          const normalReader = new FileReader();
+          normalReader.onloadend = () => {
+            setNormalImagePreview(normalReader.result as string);
+          };
+          normalReader.readAsDataURL(processedFile);
+          break;
+        case 'cover':
+          setCoverImageFile(processedFile);
+          // Create preview
+          const coverReader = new FileReader();
+          coverReader.onloadend = () => {
+            setCoverImagePreview(coverReader.result as string);
+          };
+          coverReader.readAsDataURL(processedFile);
+          break;
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      // If conversion fails, use the original file
+      const originalFile = file;
+      
+      // Set the appropriate file and preview based on image type
+      switch (imageType) {
+        case 'main':
+          setImageFile(originalFile);
+          setImagePreview(URL.createObjectURL(originalFile));
+          break;
+        case 'blanked':
+          setBlankedImageFile(originalFile);
+          setBlankedImagePreview(URL.createObjectURL(originalFile));
+          break;
+        case 'normal':
+          setNormalImageFile(originalFile);
+          setNormalImagePreview(URL.createObjectURL(originalFile));
+          break;
+        case 'cover':
+          setCoverImageFile(originalFile);
+          setCoverImagePreview(URL.createObjectURL(originalFile));
+          break;
+      }
     }
   };
 
@@ -180,10 +210,13 @@ const AdminRoundQuestionsPage: React.FC = () => {
       if (imageFile) {
         const storageRef = ref(storage, `question-images/${Date.now()}-${imageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
-            imageType: 'main'
+            imageType: 'main',
+            originalFormat: imageFile.type,
+            convertedToWebP: imageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, imageFile, metadata);
@@ -194,10 +227,13 @@ const AdminRoundQuestionsPage: React.FC = () => {
       if (blankedImageFile) {
         const storageRef = ref(storage, `question-images/blanked-${Date.now()}-${blankedImageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
-            imageType: 'blanked'
+            imageType: 'blanked',
+            originalFormat: blankedImageFile.type,
+            convertedToWebP: blankedImageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, blankedImageFile, metadata);
@@ -208,10 +244,13 @@ const AdminRoundQuestionsPage: React.FC = () => {
       if (normalImageFile) {
         const storageRef = ref(storage, `question-images/normal-${Date.now()}-${normalImageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
-            imageType: 'normal'
+            imageType: 'normal',
+            originalFormat: normalImageFile.type,
+            convertedToWebP: normalImageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, normalImageFile, metadata);
@@ -222,10 +261,13 @@ const AdminRoundQuestionsPage: React.FC = () => {
       if (coverImageFile) {
         const storageRef = ref(storage, `question-images/cover-${Date.now()}-${coverImageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
-            imageType: 'cover'
+            imageType: 'cover',
+            originalFormat: coverImageFile.type,
+            convertedToWebP: coverImageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, coverImageFile, metadata);
@@ -316,11 +358,14 @@ const AdminRoundQuestionsPage: React.FC = () => {
         
         const storageRef = ref(storage, `question-images/${Date.now()}-${imageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
             action: 'update',
-            imageType: 'main'
+            imageType: 'main',
+            originalFormat: imageFile.type,
+            convertedToWebP: imageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, imageFile, metadata);
@@ -341,11 +386,14 @@ const AdminRoundQuestionsPage: React.FC = () => {
         
         const storageRef = ref(storage, `question-images/blanked-${Date.now()}-${blankedImageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
             action: 'update',
-            imageType: 'blanked'
+            imageType: 'blanked',
+            originalFormat: blankedImageFile.type,
+            convertedToWebP: blankedImageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, blankedImageFile, metadata);
@@ -366,11 +414,14 @@ const AdminRoundQuestionsPage: React.FC = () => {
         
         const storageRef = ref(storage, `question-images/normal-${Date.now()}-${normalImageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
             action: 'update',
-            imageType: 'normal'
+            imageType: 'normal',
+            originalFormat: normalImageFile.type,
+            convertedToWebP: normalImageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, normalImageFile, metadata);
@@ -391,11 +442,14 @@ const AdminRoundQuestionsPage: React.FC = () => {
         
         const storageRef = ref(storage, `question-images/cover-${Date.now()}-${coverImageFile.name}`);
         const metadata = {
+          contentType: 'image/webp', // Ensure content type is set to webp
           customMetadata: {
             uploadedBy: 'admin',
             uploadedAt: new Date().toISOString(),
             action: 'update',
-            imageType: 'cover'
+            imageType: 'cover',
+            originalFormat: coverImageFile.type,
+            convertedToWebP: coverImageFile.type !== 'image/webp' ? 'true' : 'false'
           }
         };
         await uploadBytes(storageRef, coverImageFile, metadata);
@@ -561,16 +615,34 @@ const AdminRoundQuestionsPage: React.FC = () => {
                     )}
                   </td>
                   <td>
-                    <ol className="list-alpha pl-4">
-                      {question.options.map((option, index) => (
-                        <li key={index} className={index === question.correctAnswer ? 'font-bold text-success' : ''}>
-                          {option}
-                        </li>
-                      ))}
-                    </ol>
+                    {question.isTextInput ? (
+                      <div>
+                        <p className="text-sm text-gray-500 italic">Text input question</p>
+                        {question.alternativeAnswers && question.alternativeAnswers.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium">Alternative answers:</p>
+                            <ul className="list-disc pl-4 text-sm">
+                              {question.alternativeAnswers.map((alt, index) => (
+                                <li key={index}>{alt}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <ol className="list-alpha pl-4">
+                        {question.options.map((option, index) => (
+                          <li key={index} className={index === question.correctAnswer ? 'font-bold text-success' : ''}>
+                            {option}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
                   </td>
                   <td>
-                    {String.fromCharCode(65 + question.correctAnswer)}
+                    {question.isTextInput 
+                      ? question.textAnswer 
+                      : String.fromCharCode(65 + question.correctAnswer)}
                   </td>
                   <td>
                     <div className="flex gap-2">
