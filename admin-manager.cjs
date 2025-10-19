@@ -1,12 +1,32 @@
 // admin-manager.cjs
 const admin = require('firebase-admin');
 const readline = require('readline');
+const fs = require('fs');
+const path = require('path');
 
-admin.initializeApp({
-  credential: admin.credential.cert(require('./serviceAccount.json')),
-  projectId: 'xmas-quiz-8c02e',
-  storageBucket: 'xmas-quiz-8c02e.firebasestorage.app'
-});
+// Check if serviceAccount.json exists
+const serviceAccountPath = path.join(__dirname, 'serviceAccount.json');
+if (!fs.existsSync(serviceAccountPath)) {
+  console.error('Error: serviceAccount.json not found!');
+  console.log('\nPlease create a serviceAccount.json file with your Firebase credentials.');
+  console.log('You can use serviceAccount.example.json as a template.');
+  console.log('\n1. Go to Firebase Console > Project Settings > Service Accounts');
+  console.log('2. Click "Generate new private key"');
+  console.log('3. Save the file as serviceAccount.json in the project root');
+  process.exit(1);
+}
+
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(require('./serviceAccount.json')),
+    projectId: 'xmas-quiz-8c02e',
+    storageBucket: 'xmas-quiz-8c02e.firebasestorage.app'
+  });
+} catch (error) {
+  console.error('Error initializing Firebase Admin SDK:', error);
+  console.log('\nPlease check your serviceAccount.json file and ensure it contains valid credentials.');
+  process.exit(1);
+}
 
 const rl = readline.createInterface({
   input: process.stdin,

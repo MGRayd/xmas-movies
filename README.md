@@ -43,6 +43,20 @@ This project uses Firebase for:
 - Firestore (storing questions and scores)
 - Storage (storing question images)
 
+### Service Account Setup
+
+To use the admin tools, you need to set up a Firebase service account:
+
+1. Go to the [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. Go to Project Settings > Service Accounts
+4. Click "Generate new private key"
+5. Save the file as `serviceAccount.json` in the project root
+
+**IMPORTANT: Never commit the `serviceAccount.json` file to version control!**
+
+A template file `serviceAccount.example.json` is provided for reference.
+
 ### Security Rules
 
 The project includes security rules for both Firestore and Storage:
