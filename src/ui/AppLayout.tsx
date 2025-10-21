@@ -60,8 +60,8 @@ export default function AppLayout() {
           <Link to="/" className="hidden sm:flex items-center group">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-xmas-gold to-xmas-line rounded-full opacity-70 group-hover:opacity-100 blur transition duration-200"></div>
-              <div className="relative flex items-center justify-center w-10 h-10 bg-xmas-card rounded-full border border-xmas-gold">
-                <i className="fas fa-holly-berry text-xmas-line group-hover:text-xmas-gold transition-colors duration-300"></i>
+              <div className="relative flex items-center justify-center w-10 h-10 bg-xmas-card rounded-full border border-xmas-gold overflow-hidden">
+                <img src="/Santa.png" alt="Santa" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
               </div>
             </div>
             <div className="ml-3 font-christmas text-xl sm:text-2xl bg-gradient-to-br from-xmas-gold via-xmas-snow to-xmas-gold bg-clip-text text-transparent font-bold">
@@ -71,8 +71,8 @@ export default function AppLayout() {
           
           {/* Mobile logo */}
           <Link to="/" className="sm:hidden flex items-center">
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-xmas-card border border-xmas-gold">
-              <i className="fas fa-holly-berry text-xmas-line"></i>
+            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-xmas-card border border-xmas-gold overflow-hidden">
+              <img src="/Santa.png" alt="Santa" className="w-full h-full object-cover" />
             </div>
             <span className="ml-2 font-christmas text-lg text-xmas-gold">Xmas Quiz</span>
           </Link>
@@ -107,8 +107,8 @@ export default function AppLayout() {
           
           <div className="flex justify-between items-center p-4 border-b border-xmas-gold bg-xmas-card bg-opacity-80">
             <div className="flex items-center">
-              <div className="w-9 h-9 flex items-center justify-center rounded-full bg-xmas-card border border-xmas-gold shadow-lg">
-                <i className="fas fa-holly-berry text-xmas-line"></i>
+              <div className="w-9 h-9 flex items-center justify-center rounded-full bg-xmas-card border border-xmas-gold shadow-lg overflow-hidden">
+                <img src="/Santa.png" alt="Santa" className="w-full h-full object-cover" />
               </div>
               <div className="ml-3 font-christmas text-xl bg-gradient-to-br from-xmas-gold via-xmas-snow to-xmas-gold bg-clip-text text-transparent font-bold">
                 Xmas Quiz
