@@ -65,7 +65,7 @@ export default function AppLayout() {
               </div>
             </div>
             <div className="ml-3 font-christmas text-xl sm:text-2xl bg-gradient-to-br from-xmas-gold via-xmas-snow to-xmas-gold bg-clip-text text-transparent font-bold">
-              Xmas Quiz
+              PACT - Christmas Quiz
             </div>
           </Link>
           
