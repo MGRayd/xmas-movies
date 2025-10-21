@@ -4,6 +4,7 @@ import { collection, query, orderBy, getDocs, addDoc, serverTimestamp } from 'fi
 import { db } from '../firebase';
 import QuestionImage from '../components/QuestionImage';
 import RoundResults from '../components/RoundResults';
+import RoundSelector from '../components/RoundSelector';
 import { Question, Round, RoundType } from '../types/quiz';
 import HoverImage from '../components/HoverImage';
 import { isTextAnswerCorrect } from '../utils/stringMatching';
@@ -15,12 +16,13 @@ const QuizPage: React.FC = () => {
   const navigate = useNavigate();
   const [rounds, setRounds] = useState<Round[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+  const [currentRoundIndex, setCurrentRoundIndex] = useState<number | null>(null);
   const [roundQuestions, setRoundQuestions] = useState<Question[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<{[questionId: string]: number | null}>({});
   const [textAnswers, setTextAnswers] = useState<{[questionId: string]: string}>({});
   const [score, setScore] = useState(0);
   const [roundScores, setRoundScores] = useState<{[roundId: string]: number}>({});
+  const [completedRounds, setCompletedRounds] = useState<string[]>([]);
   const [playerName, setPlayerName] = useState('');
   const [showNameInput, setShowNameInput] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
@@ -28,6 +30,7 @@ const QuizPage: React.FC = () => {
   const [roundCompleted, setRoundCompleted] = useState(false);
   const [showAnswers, setShowAnswers] = useState(false);
   const [showRoundResults, setShowRoundResults] = useState(false);
+  const [showRoundSelector, setShowRoundSelector] = useState(false);
   const [userAnswers, setUserAnswers] = useState<{ [questionId: string]: string | number | null }>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -74,13 +77,8 @@ const QuizPage: React.FC = () => {
         setQuestions(fetchedQuestions);
         setRoundScores(initialRoundScores);
         
-        // Set up first round questions
-        if (fetchedRounds.length > 0) {
-          const firstRoundQuestions = fetchedQuestions.filter(
-            q => q.roundId === fetchedRounds[0].id
-          );
-          setRoundQuestions(firstRoundQuestions);
-        }
+              // Don't set up first round questions automatically
+        // We'll let the user choose which round to start with
         
         setLoading(false);
       } catch (err) {
@@ -97,6 +95,7 @@ const QuizPage: React.FC = () => {
 
   const startQuiz = () => {
     setQuizStarted(true);
+    setShowRoundSelector(true);
   };
 
   const handleOptionSelect = (questionId: string, optionIndex: number) => {
@@ -114,6 +113,8 @@ const QuizPage: React.FC = () => {
   };
 
   const handleSubmitRound = () => {
+    if (currentRoundIndex === null) return;
+    
     // Calculate score for the round
     let roundScore = 0;
     const newUserAnswers: {[questionId: string]: string | number | null} = {};
@@ -172,24 +173,35 @@ const QuizPage: React.FC = () => {
     // Scroll to top of the page
     scrollToTop();
     
-    // Check if there are more rounds
-    if (currentRoundIndex < rounds.length - 1) {
-      // Move to next round
-      const nextRoundIndex = currentRoundIndex + 1;
-      const nextRound = rounds[nextRoundIndex];
-      const nextRoundQuestions = questions.filter(q => q.roundId === nextRound.id);
-      
-      setCurrentRoundIndex(nextRoundIndex);
-      setRoundQuestions(nextRoundQuestions);
-      setSelectedOptions({});
-      setTextAnswers({});
-      setRoundCompleted(false);
-      setShowAnswers(false);
-    } else {
-      // Quiz is finished
-      setQuizFinished(true);
-      setShowNameInput(true);
+    // Add current round to completed rounds
+    if (currentRoundIndex !== null) {
+      const currentRound = rounds[currentRoundIndex];
+      if (currentRound && !completedRounds.includes(currentRound.id)) {
+        setCompletedRounds(prev => [...prev, currentRound.id]);
+      }
     }
+    
+    // Check if all rounds are completed
+    const updatedCompletedRounds = [...completedRounds];
+    if (currentRoundIndex !== null && !updatedCompletedRounds.includes(rounds[currentRoundIndex].id)) {
+      updatedCompletedRounds.push(rounds[currentRoundIndex].id);
+    }
+    
+    // Always go back to round selector, even if all rounds are completed
+    // This allows users to review their scores before final submission
+    if (updatedCompletedRounds.length >= rounds.length) {
+      // All rounds completed, quiz is finished but don't show name input yet
+      setQuizFinished(true);
+    }
+    
+    // Show round selector for next round or final review
+    setShowRoundSelector(true);
+    setCurrentRoundIndex(null);
+    setRoundQuestions([]);
+    setSelectedOptions({});
+    setTextAnswers({});
+    setRoundCompleted(false);
+    setShowAnswers(false);
   };
 
   const handleSubmitScore = async () => {
@@ -204,6 +216,7 @@ const QuizPage: React.FC = () => {
         playerName: playerName.trim(),
         score,
         roundScores,
+        completedRounds,
         timestamp: serverTimestamp()
       });
       
@@ -268,7 +281,7 @@ const QuizPage: React.FC = () => {
         <h1 className="font-christmas text-4xl md:text-5xl text-xmas-line mb-6">Christmas Quiz</h1>
         <div className="bg-xmas-card p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
           <h2 className="text-2xl font-christmas text-xmas-gold mb-4">Ready to Test Your Christmas Knowledge?</h2>
-          <p className="mb-6">Answer the questions correctly to earn points. Take your time and enjoy the quiz!</p>
+          <p className="mb-6">Answer the questions correctly to earn points. Choose any round to begin!</p>
           <button 
             className="btn btn-primary btn-lg font-christmas text-xl"
             onClick={startQuiz}
@@ -280,7 +293,7 @@ const QuizPage: React.FC = () => {
     );
   }
 
-  if (quizFinished && showNameInput) {
+  if (showNameInput) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="font-christmas text-4xl md:text-5xl text-xmas-line mb-6">Quiz Complete!</h1>
@@ -327,9 +340,14 @@ const QuizPage: React.FC = () => {
   const currentRound = rounds[currentRoundIndex];
 
   // Show round results if we've completed all questions in the round
-  if (showRoundResults) {
-    // Check if this is the last round
-    const isLastRound = currentRoundIndex === rounds.length - 1;
+  if (showRoundResults && currentRoundIndex !== null) {
+    const currentRound = rounds[currentRoundIndex];
+    // Check if all rounds are completed (or will be after this one)
+    const updatedCompletedRounds = [...completedRounds];
+    if (!updatedCompletedRounds.includes(currentRound.id)) {
+      updatedCompletedRounds.push(currentRound.id);
+    }
+    const isLastRound = updatedCompletedRounds.length >= rounds.length;
     
     return (
       <RoundResults
@@ -343,22 +361,70 @@ const QuizPage: React.FC = () => {
     );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <span className="text-sm">Round</span>
-          <h2 className="text-xl font-bold">{currentRound?.title || 'Quiz'}</h2>
+  // Show round selector if needed
+  if (showRoundSelector) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-christmas text-xmas-line">Christmas Quiz</h1>
+          <div className="text-center">
+            <span className="text-sm">Current Score</span>
+            <h2 className="text-xl font-bold">{score}</h2>
+          </div>
+          <div className="text-right">
+            <span className="text-sm">Rounds Completed</span>
+            <h2 className="text-xl font-bold">{completedRounds.length} / {rounds.length}</h2>
+          </div>
         </div>
-        <div className="text-center">
-          <span className="text-sm">Score</span>
-          <h2 className="text-xl font-bold">{score}</h2>
-        </div>
-        <div className="text-right">
-          <span className="text-sm">Questions</span>
-          <h2 className="text-xl font-bold">{roundQuestions.length}</h2>
-        </div>
+        
+        <RoundSelector 
+          rounds={rounds}
+          completedRounds={completedRounds}
+          onSelectRound={(index) => {
+            const selectedRound = rounds[index];
+            const roundQuestions = questions.filter(q => q.roundId === selectedRound.id);
+            
+            setCurrentRoundIndex(index);
+            setRoundQuestions(roundQuestions);
+            
+            // If the round is already completed, show the results instead of the questions
+            if (completedRounds.includes(selectedRound.id)) {
+              setShowRoundResults(true);
+            } else {
+              setShowRoundResults(false);
+            }
+            
+            setShowRoundSelector(false);
+          }}
+          currentRoundIndex={currentRoundIndex}
+          roundScores={roundScores}
+          quizFinished={quizFinished}
+          onSubmitFinalScore={() => setShowNameInput(true)}
+        />
       </div>
+    );
+  }
+  
+  // If a round is selected, show the questions
+  if (currentRoundIndex !== null) {
+    const currentRound = rounds[currentRoundIndex];
+    
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <span className="text-sm">Round</span>
+            <h2 className="text-xl font-bold">{currentRound?.title || 'Quiz'}</h2>
+          </div>
+          <div className="text-center">
+            <span className="text-sm">Score</span>
+            <h2 className="text-xl font-bold">{score}</h2>
+          </div>
+          <div className="text-right">
+            <span className="text-sm">Questions</span>
+            <h2 className="text-xl font-bold">{roundQuestions.length}</h2>
+          </div>
+        </div>
 
       <div className="space-y-8 mb-8">
         {roundQuestions.map((question, questionIndex) => (
@@ -415,7 +481,16 @@ const QuizPage: React.FC = () => {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <button 
+          className="btn btn-outline"
+          onClick={() => {
+            setShowRoundSelector(true);
+            setCurrentRoundIndex(null);
+          }}
+        >
+          <i className="fas fa-arrow-left mr-2"></i> Back to Round Selection
+        </button>
         <button 
           className="btn btn-primary btn-lg"
           onClick={handleSubmitRound}
@@ -425,6 +500,7 @@ const QuizPage: React.FC = () => {
       </div>
     </div>
   );
+  }
 };
 
 export default QuizPage;
