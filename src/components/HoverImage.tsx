@@ -51,7 +51,7 @@ const HoverImage: React.FC<HoverImageProps> = ({
       <img 
         src={src} 
         alt={alt} 
-        className={`${thumbnailHeight} w-auto object-cover rounded cursor-pointer ${className}`}
+        className={`${thumbnailHeight} w-auto object-cover rounded-lg cursor-pointer ${className}`}
         onMouseEnter={() => setShowFullSize(true)}
         onMouseLeave={() => setShowFullSize(false)}
       />
@@ -59,7 +59,7 @@ const HoverImage: React.FC<HoverImageProps> = ({
       {showFullSize && (
         <div 
           ref={popupRef}
-          className={`absolute z-50 shadow-xl rounded-lg overflow-hidden ${
+          className={`absolute z-50 shadow-2xl rounded-lg overflow-hidden ${
             position.top ? 'bottom-full mb-2' : 'top-full mt-2'
           } ${
             position.left === true ? 'right-0' : 
@@ -70,7 +70,7 @@ const HoverImage: React.FC<HoverImageProps> = ({
           <img 
             src={src} 
             alt={alt} 
-            className="object-contain bg-black bg-opacity-80 p-2"
+            className="object-contain rounded-lg"
             style={{ 
               maxHeight: maxHeight,
               maxWidth: maxWidth,
