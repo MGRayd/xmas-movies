@@ -59,7 +59,7 @@ const RoundSelector: React.FC<RoundSelectorProps> = ({
           return (
             <button
               key={round.id}
-              className={`p-4 rounded-lg border transition-all ${
+              className={`p-5 rounded-lg border transition-all ${
                 isActive 
                   ? 'bg-xmas-gold bg-opacity-20 border-xmas-gold' 
                   : isCompleted
@@ -68,13 +68,13 @@ const RoundSelector: React.FC<RoundSelectorProps> = ({
               }`}
               onClick={() => onSelectRound(index)}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className="text-xl">
                   {getRoundTypeIcon(round.type)}
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="font-christmas text-lg">{round.title}</h3>
-                  <p className="text-sm text-xmas-text text-opacity-80 line-clamp-2 h-10">{round.description}</p>
+                  <p className="text-sm text-xmas-text text-opacity-80 line-clamp-3 h-14">{round.description}</p>
                 </div>
                 {isCompleted && (
                   <div className="text-success flex flex-col items-end">
