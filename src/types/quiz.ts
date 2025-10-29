@@ -21,6 +21,7 @@ export interface Round {
   description: string;
   order: number;
   type: RoundType;
+  published?: boolean; // Whether this round is published and visible to users
 }
 
 export enum RoundType {

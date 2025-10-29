@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { collection, query, orderBy, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -20,6 +20,7 @@ const AdminRoundsPage: React.FC = () => {
   const [roundDescription, setRoundDescription] = useState('');
   const [roundType, setRoundType] = useState<RoundType>(RoundType.GENERAL);
   const [roundOrder, setRoundOrder] = useState(1);
+  const [roundPublished, setRoundPublished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Redirect if not admin
@@ -29,47 +30,69 @@ const AdminRoundsPage: React.FC = () => {
     }
   }, [isAdmin, adminCheckLoading, navigate]);
 
-  // Fetch rounds
-  useEffect(() => {
-    const fetchRounds = async () => {
-      if (!isAdmin) return;
+  // Define fetchRounds as a useCallback function so it can be called from other functions
+  const fetchRounds = useCallback(async () => {
+    try {
+      setLoading(true);
+      const roundsQuery = query(
+        collection(db, 'rounds'),
+        orderBy('order', 'asc')
+      );
       
-      try {
-        const roundsQuery = query(
-          collection(db, 'rounds'),
-          orderBy('order', 'asc')
-        );
-        
-        const querySnapshot = await getDocs(roundsQuery);
-        const fetchedRounds: Round[] = [];
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data() as Omit<Round, 'id'>;
-          fetchedRounds.push({
-            id: doc.id,
-            ...data
-          } as Round);
-        });
-        
-        setRounds(fetchedRounds);
-      } catch (err) {
-        console.error('Error fetching rounds:', err);
-        setError('Failed to load rounds');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const querySnapshot = await getDocs(roundsQuery);
+      const fetchedRounds: Round[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as Omit<Round, 'id'>;
+        fetchedRounds.push({
+          id: doc.id,
+          ...data,
+          // Ensure published field has a default value (false) if it's undefined
+          published: data.published !== undefined ? data.published : false
+        } as Round);
+      });
+      
+      setRounds(fetchedRounds);
+    } catch (err) {
+      console.error('Error fetching rounds:', err);
+      setError('Failed to load rounds');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    if (isAdmin) {
+  // Create a reusable function for toggling published status
+  const toggleRoundPublished = useCallback(async (round: Round) => {
+    try {
+      // Get the current published state, defaulting to false if undefined
+      const isCurrentlyPublished = round.published === true;
+      
+      const roundRef = doc(db, 'rounds', round.id);
+      await updateDoc(roundRef, {
+        published: !isCurrentlyPublished
+      });
+      
+      // Refresh all rounds instead of just updating local state
+      await fetchRounds();
+    } catch (err) {
+      console.error('Error toggling published status:', err);
+      setError('Failed to update round status');
+    }
+  }, [db, fetchRounds]);
+
+  // Fetch rounds on component mount
+  useEffect(() => {
+    if (!adminCheckLoading) {
       fetchRounds();
     }
-  }, [isAdmin]);
+  }, [adminCheckLoading, fetchRounds]);
 
   const resetForm = () => {
     setRoundTitle('');
     setRoundDescription('');
     setRoundType(RoundType.GENERAL);
     setRoundOrder(rounds.length + 1);
+    setRoundPublished(false);
     setEditingRound(null);
   };
 
@@ -83,27 +106,13 @@ const AdminRoundsPage: React.FC = () => {
         title: roundTitle,
         description: roundDescription,
         type: roundType,
-        order: roundOrder
+        order: roundOrder,
+        published: roundPublished
       });
       
-      // Refresh rounds
-      const roundsQuery = query(
-        collection(db, 'rounds'),
-        orderBy('order', 'asc')
-      );
+      // Refresh rounds using the fetchRounds function
+      await fetchRounds();
       
-      const querySnapshot = await getDocs(roundsQuery);
-      const updatedRounds: Round[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data() as Omit<Round, 'id'>;
-        updatedRounds.push({
-          id: doc.id,
-          ...data
-        } as Round);
-      });
-      
-      setRounds(updatedRounds);
       setShowAddModal(false);
       resetForm();
     } catch (err) {
@@ -120,6 +129,8 @@ const AdminRoundsPage: React.FC = () => {
     setRoundDescription(round.description);
     setRoundType(round.type);
     setRoundOrder(round.order);
+    // Explicitly check for true to handle undefined/null values
+    setRoundPublished(round.published === true);
     setShowAddModal(true);
   };
 
@@ -136,27 +147,13 @@ const AdminRoundsPage: React.FC = () => {
         title: roundTitle,
         description: roundDescription,
         type: roundType,
-        order: roundOrder
+        order: roundOrder,
+        published: roundPublished
       });
       
-      // Refresh rounds
-      const roundsQuery = query(
-        collection(db, 'rounds'),
-        orderBy('order', 'asc')
-      );
+      // Refresh rounds using the fetchRounds function
+      await fetchRounds();
       
-      const querySnapshot = await getDocs(roundsQuery);
-      const updatedRounds: Round[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data() as Omit<Round, 'id'>;
-        updatedRounds.push({
-          id: doc.id,
-          ...data
-        } as Round);
-      });
-      
-      setRounds(updatedRounds);
       setShowAddModal(false);
       resetForm();
     } catch (err) {
@@ -172,7 +169,8 @@ const AdminRoundsPage: React.FC = () => {
     
     try {
       await deleteDoc(doc(db, 'rounds', roundId));
-      setRounds(rounds.filter(round => round.id !== roundId));
+      // Refresh rounds using the fetchRounds function
+      await fetchRounds();
     } catch (err) {
       console.error('Error deleting round:', err);
       setError('Failed to delete round');
@@ -250,7 +248,14 @@ const AdminRoundsPage: React.FC = () => {
                   <h2 className="card-title font-christmas">
                     {getRoundTypeIcon(round.type)} {round.title}
                   </h2>
-                  <div className="badge badge-outline">#{round.order}</div>
+                  <div className="flex gap-2 items-center">
+                    {round.published === true ? (
+                      <div className="badge badge-success">Published</div>
+                    ) : (
+                      <div className="badge badge-warning">Draft</div>
+                    )}
+                    <div className="badge badge-outline">#{round.order}</div>
+                  </div>
                 </div>
                 <p className="text-sm mb-4">{round.description}</p>
                 <div className="card-actions justify-end">
@@ -260,12 +265,16 @@ const AdminRoundsPage: React.FC = () => {
                   >
                     <i className="fas fa-list mr-1"></i> Manage Questions
                   </Link>
+                  
+                  {/* Edit button */}
                   <button 
                     className="btn btn-outline btn-sm"
                     onClick={() => handleEditRound(round)}
                   >
                     <i className="fas fa-edit"></i>
                   </button>
+                  
+                  {/* Delete button */}
                   <button 
                     className="btn btn-error btn-outline btn-sm"
                     onClick={() => handleDeleteRound(round.id)}
@@ -356,6 +365,21 @@ const AdminRoundsPage: React.FC = () => {
                     min="1"
                     required
                   />
+                </div>
+                
+                <div className="form-control mb-6">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Published</span>
+                    <input 
+                      type="checkbox" 
+                      className="toggle toggle-primary" 
+                      checked={roundPublished}
+                      onChange={(e) => setRoundPublished(e.target.checked)}
+                    />
+                  </label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Only published rounds will be visible to users in the quiz.
+                  </p>
                 </div>
                 
                 <div className="flex justify-end gap-2">

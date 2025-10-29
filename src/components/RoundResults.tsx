@@ -22,7 +22,7 @@ const RoundResults: React.FC<RoundResultsProps> = ({
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="bg-xmas-card rounded-lg shadow-lg p-6 mb-6 snow-accumulation snow-accumulation-slow relative">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4">
           <h2 className="text-2xl font-christmas text-xmas-gold">
             {round.title} - Round Results
           </h2>
@@ -31,6 +31,12 @@ const RoundResults: React.FC<RoundResultsProps> = ({
             <div className="text-3xl font-bold text-xmas-gold">{roundScore} / {questions.length}</div>
           </div>
         </div>
+
+        {round.description && (
+          <div className="bg-xmas-gold bg-opacity-10 p-4 rounded-lg mb-6 border border-xmas-gold border-opacity-30">
+            <p className="text-xmas-text italic">{round.description}</p>
+          </div>
+        )}
 
         <div className="space-y-6">
           {questions.map((question) => (

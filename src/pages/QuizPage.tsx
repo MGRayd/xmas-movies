@@ -53,6 +53,9 @@ const QuizPage: React.FC = () => {
           } as Round);
         });
         
+        // Filter out unpublished rounds for regular users
+        const publishedRounds = fetchedRounds.filter(round => round.published !== false);
+        
         // Then fetch questions
         const questionsQuery = query(collection(db, 'questions'));
         const questionsSnapshot = await getDocs(questionsQuery);
@@ -69,11 +72,11 @@ const QuizPage: React.FC = () => {
         
         // Initialize round scores
         const initialRoundScores: {[roundId: string]: number} = {};
-        fetchedRounds.forEach(round => {
+        publishedRounds.forEach(round => {
           initialRoundScores[round.id] = 0;
         });
         
-        setRounds(fetchedRounds);
+        setRounds(publishedRounds);
         setQuestions(fetchedQuestions);
         setRoundScores(initialRoundScores);
         
@@ -411,7 +414,7 @@ const QuizPage: React.FC = () => {
     
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div>
             <span className="text-sm">Round</span>
             <h2 className="text-xl font-bold">{currentRound?.title || 'Quiz'}</h2>
@@ -425,6 +428,12 @@ const QuizPage: React.FC = () => {
             <h2 className="text-xl font-bold">{roundQuestions.length}</h2>
           </div>
         </div>
+        
+        {currentRound?.description && (
+          <div className="bg-xmas-gold bg-opacity-10 p-4 rounded-lg mb-6 border border-xmas-gold border-opacity-30">
+            <p className="text-xmas-text italic">{currentRound.description}</p>
+          </div>
+        )}
 
       <div className="space-y-8 mb-8">
         {roundQuestions.map((question, questionIndex) => (
