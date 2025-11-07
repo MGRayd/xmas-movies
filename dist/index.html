@@ -3,15 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xmas Quiz</title>
+    <title>Xmas-Movies</title>
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#c10000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Xmas Movies">
+    <link rel="apple-touch-icon" href="/Santa.png">
+    <link rel="icon" type="image/png" href="/Santa.png">
     <!-- Google Fonts - Modern Christmas theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Christmas icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script type="module" crossorigin src="/assets/index-DtwSUYgD.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-X-If00NG.css">
+    <script type="module" crossorigin src="/assets/index-cjtOrSjm.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BMoAIHJ6.css">
   </head>
   <body>
     <div id="root"></div>
@@ -25,6 +33,19 @@
           });
         }
       });
+      
+      // Register Service Worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
     </script>
   </body>
 </html>

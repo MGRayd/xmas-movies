@@ -23,7 +23,7 @@ import MovieImportPage from './pages/MovieImportPage'
 import RandomMoviePage from './pages/RandomMoviePage'
 import ProfilePage from './pages/ProfilePage'
 
-// Admin pages (keeping these for reference, will be updated later)
+// Admin pages
 import AdminLoginPage from './pages/AdminLoginPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 
@@ -47,9 +47,16 @@ const router = createBrowserRouter([
         ]
       },
       
-      // Admin routes (keeping these for reference)
+      // Admin routes
       { path: '/admin/login', element: <AdminLoginPage /> },
-      { path: '/admin', element: <AdminDashboardPage /> },
+      { 
+        path: '/admin',
+        element: (
+          <ProtectedRoute>
+            <AdminDashboardPage />
+          </ProtectedRoute>
+        )
+      },
     ] 
   }
 ])

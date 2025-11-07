@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useIsAdmin } from '../hooks/useIsAdmin';
-
-import { Round, RoundType } from '../types/quiz';
+import { updateMoviesWithSortTitles } from '../utils/migrationUtils';
 
 const AdminDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin, loading: adminCheckLoading } = useIsAdmin();
   
-  const [rounds, setRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [migrationLoading, setMigrationLoading] = useState(false);
+  const [movieStats, setMovieStats] = useState({
+    totalMovies: 0,
+    moviesWithSortTitle: 0
+  });
 
   // Redirect if not admin
   useEffect(() => {
@@ -21,56 +25,42 @@ const AdminDashboardPage: React.FC = () => {
     }
   }, [isAdmin, adminCheckLoading, navigate]);
 
-  // Fetch rounds
+  // Fetch movie stats
   useEffect(() => {
-    const fetchRounds = async () => {
+    const fetchData = async () => {
       if (!isAdmin) return;
       
       setLoading(true);
       try {
-        // Fetch rounds
-        const roundsSnapshot = await getDocs(query(
-          collection(db, 'rounds'),
-          orderBy('order', 'asc')
-        ));
+        // Fetch movie stats
+        const moviesSnapshot = await getDocs(collection(db, 'movies'));
+        const totalMovies = moviesSnapshot.size;
+        let moviesWithSortTitle = 0;
         
-        const fetchedRounds: Round[] = [];
-        roundsSnapshot.forEach((doc) => {
-          const data = doc.data() as Omit<Round, 'id'>;
-          fetchedRounds.push({
-            id: doc.id,
-            ...data
-          } as Round);
+        moviesSnapshot.forEach(doc => {
+          const movieData = doc.data();
+          if (movieData.sortTitle) {
+            moviesWithSortTitle++;
+          }
         });
         
-        setRounds(fetchedRounds);
+        setMovieStats({
+          totalMovies,
+          moviesWithSortTitle
+        });
       } catch (err) {
-        console.error('Error fetching rounds:', err);
-        setError('Failed to load rounds');
+        console.error('Error fetching movie data:', err);
+        setError('Failed to load movie data');
       } finally {
         setLoading(false);
       }
     };
 
     if (isAdmin) {
-      fetchRounds();
+      fetchData();
     }
   }, [isAdmin]);
 
-    const getRoundTypeIcon = (type: RoundType) => {
-    switch (type) {
-      case RoundType.PICTURE:
-        return <i className="fas fa-image text-info"></i>;
-      case RoundType.MUSIC:
-        return <i className="fas fa-music text-success"></i>;
-      case RoundType.TRIVIA:
-        return <i className="fas fa-lightbulb text-warning"></i>;
-      case RoundType.CHRISTMAS:
-        return <i className="fas fa-holly-berry text-error"></i>;
-      default:
-        return <i className="fas fa-question-circle text-primary"></i>;
-    }
-  };
 
   if (adminCheckLoading || loading) {
     return (
@@ -80,13 +70,42 @@ const AdminDashboardPage: React.FC = () => {
     );
   }
 
+  // Handle sort title migration
+  const handleUpdateSortTitles = async () => {
+    try {
+      setMigrationLoading(true);
+      setError(null);
+      
+      // Run the migration
+      const result = await updateMoviesWithSortTitles();
+      
+      setSuccess(`Sort titles updated for ${result.updated} out of ${result.total} movies.`);
+      
+      // Update stats
+      setMovieStats(prev => ({
+        ...prev,
+        moviesWithSortTitle: prev.moviesWithSortTitle + result.updated
+      }));
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+    } catch (err: any) {
+      console.error('Error updating sort titles:', err);
+      setError(err.message || 'Failed to update sort titles');
+    } finally {
+      setMigrationLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="font-christmas text-3xl md:text-4xl text-xmas-line">Admin Dashboard</h1>
         <div className="flex gap-2">
-          <Link to="/admin/results" className="btn btn-outline">
-            <i className="fas fa-trophy mr-2"></i> View Results
+          <Link to="/movies" className="btn btn-outline">
+            <i className="fas fa-film mr-2"></i> Movies
           </Link>
         </div>
       </div>
@@ -98,52 +117,58 @@ const AdminDashboardPage: React.FC = () => {
         </div>
       )}
       
+      {success && (
+        <div className="alert alert-success mb-6">
+          <i className="fas fa-check-circle mr-2"></i>
+          <span>{success}</span>
+        </div>
+      )}
+      
       <div className="mb-8">
-        <h2 className="text-2xl font-christmas mb-4 text-xmas-gold">Quiz Rounds</h2>
-        {rounds.length === 0 ? (
-          <div className="bg-xmas-card p-8 rounded-lg text-center">
-            <h3 className="text-xl mb-4">No rounds yet</h3>
-            <p className="mb-4">Start by adding your first quiz round!</p>
-            <Link to="/admin/rounds" className="btn btn-primary">
-              <i className="fas fa-plus mr-2"></i> Add Round
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rounds.map((round) => (
-              <div key={round.id} className="card bg-xmas-card shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-center">
-                    <h2 className="card-title font-christmas">
-                      {getRoundTypeIcon(round.type)} {round.title}
-                    </h2>
-                    <div className="badge badge-outline">#{round.order}</div>
+        <h2 className="text-2xl font-christmas mb-4 text-xmas-gold">Movie Administration</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="card bg-xmas-card shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title font-christmas">
+                <i className="fas fa-sort-alpha-down text-primary mr-2"></i> Sort Title Migration
+              </h2>
+              <p className="mb-4">
+                Update all movies to include sort titles (e.g., "The Grinch" → "Grinch") for better alphabetical sorting.
+              </p>
+              <div className="flex flex-col gap-2">
+                <div className="stats bg-base-200 text-base-content">
+                  <div className="stat">
+                    <div className="stat-title">Total Movies</div>
+                    <div className="stat-value">{movieStats.totalMovies}</div>
                   </div>
-                  <p className="text-sm mb-4">{round.description}</p>
-                  <div className="card-actions justify-end">
-                    <Link 
-                      to={`/admin/questions/${round.id}`} 
-                      className="btn btn-primary btn-sm"
-                    >
-                      <i className="fas fa-list mr-1"></i> Manage Questions
-                    </Link>
+                  <div className="stat">
+                    <div className="stat-title">With Sort Titles</div>
+                    <div className="stat-value">{movieStats.moviesWithSortTitle}</div>
+                    <div className="stat-desc">
+                      {movieStats.totalMovies > 0 ? 
+                        `${Math.round((movieStats.moviesWithSortTitle / movieStats.totalMovies) * 100)}%` : 
+                        '0%'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            <div className="card bg-base-100 border-2 border-dashed border-base-300 shadow-xl flex items-center justify-center">
-              <div className="card-body items-center text-center">
-                <h2 className="card-title font-christmas">Add New Round</h2>
-                <p>Create a new quiz round</p>
-                <div className="card-actions justify-center mt-4">
-                  <Link to="/admin/rounds" className="btn btn-primary">
-                    <i className="fas fa-plus mr-2"></i> Add Round
-                  </Link>
-                </div>
+                <button 
+                  className="btn btn-primary w-full"
+                  onClick={handleUpdateSortTitles}
+                  disabled={migrationLoading || movieStats.moviesWithSortTitle === movieStats.totalMovies}
+                >
+                  {migrationLoading ? (
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                  ) : (
+                    <i className="fas fa-sync-alt mr-2"></i>
+                  )}
+                  {movieStats.moviesWithSortTitle === movieStats.totalMovies ? 
+                    'All Movies Updated' : 
+                    'Update Sort Titles'}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

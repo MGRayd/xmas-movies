@@ -1,0 +1,23 @@
+{
+  "name": "Christmas Movies",
+  "short_name": "Xmas Movies",
+  "description": "Track your Christmas movie collection",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#c10000",
+  "icons": [
+    {
+      "src": "Santa.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "Santa.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

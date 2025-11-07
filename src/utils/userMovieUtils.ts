@@ -2,6 +2,8 @@ import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, deleteDoc, 
 import { db } from '../firebase';
 import { Movie, UserMovie } from '../types/movie';
 
+import { updateMovieInCache, clearMovieCache } from './cacheUtils';
+
 // Create or update a user movie in the subcollection
 export const saveUserMovie = async (
   userId: string,
@@ -54,7 +56,12 @@ export const saveUserMovie = async (
   
   // Get the updated document
   const updatedDoc = await getDoc(userMovieRef);
-  return { id: updatedDoc.id, ...updatedDoc.data() } as UserMovie;
+  const updatedUserMovie = { id: updatedDoc.id, ...updatedDoc.data() } as UserMovie;
+  
+  // Update the cache with the new data
+  updateMovieInCache(userId, movieId, updatedUserMovie);
+  
+  return updatedUserMovie;
 };
 
 // Get a single user movie
@@ -107,13 +114,25 @@ export const getUserMoviesWithFilter = async (
 export const deleteUserMovie = async (userId: string, movieId: string): Promise<void> => {
   const userMovieRef = doc(db, `users/${userId}/movies`, movieId);
   await deleteDoc(userMovieRef);
+  
+  // Clear the cache when a movie is deleted
+  clearMovieCache();
 };
+
+import { getMovieCache, setMovieCache } from './cacheUtils';
 
 // Get user movies with their movie details
 export const getUserMoviesWithDetails = async (userId: string): Promise<{
   userMovies: {[movieId: string]: UserMovie},
   movies: Movie[]
 }> => {
+  // Check cache first
+  const cachedData = getMovieCache(userId);
+  if (cachedData) {
+    return cachedData;
+  }
+  
+  // If not in cache, fetch from Firestore
   // Get all user movies
   const userMovies = await getUserMovies(userId);
   
@@ -129,23 +148,37 @@ export const getUserMoviesWithDetails = async (userId: string): Promise<{
   // Fetch movie details
   const moviesData: Movie[] = [];
   
-  // If user has movies, fetch their details
+  // If user has movies, fetch their details in batches
   if (movieIds.length > 0) {
-    // Fetch each movie by its document ID
-    for (const movieId of movieIds) {
-      try {
-        const movieDoc = await getDoc(doc(db, 'movies', movieId));
-        if (movieDoc.exists()) {
-          moviesData.push({ id: movieDoc.id, ...movieDoc.data() } as Movie);
-        }
-      } catch (error) {
-        console.error(`Error fetching movie ${movieId}:`, error);
-      }
+    // Process in batches of 10 to avoid too many parallel requests
+    const batchSize = 10;
+    for (let i = 0; i < movieIds.length; i += batchSize) {
+      const batch = movieIds.slice(i, i + batchSize);
+      const promises = batch.map(movieId => 
+        getDoc(doc(db, 'movies', movieId))
+          .then(movieDoc => {
+            if (movieDoc.exists()) {
+              return { id: movieDoc.id, ...movieDoc.data() } as Movie;
+            }
+            return null;
+          })
+          .catch(error => {
+            console.error(`Error fetching movie ${movieId}:`, error);
+            return null;
+          })
+      );
+      
+      const results = await Promise.all(promises);
+      moviesData.push(...results.filter(Boolean) as Movie[]);
     }
   }
   
-  return {
+  // Store in cache
+  const result = {
     userMovies: userMoviesMap,
     movies: moviesData
   };
+  setMovieCache(userId, userMoviesMap, moviesData);
+  
+  return result;
 };

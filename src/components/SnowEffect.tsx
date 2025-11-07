@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface SnowflakeProps {
   size: number;
@@ -11,12 +11,31 @@ interface SnowflakeProps {
 
 interface SnowEffectProps {
   snowflakeCount?: number;
+  mobileSnowflakeCount?: number;
 }
 
-const SnowEffect: React.FC<SnowEffectProps> = ({ snowflakeCount = 100 }) => {
+const SnowEffect: React.FC<SnowEffectProps> = ({ snowflakeCount = 100, mobileSnowflakeCount = 50 }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [actualSnowflakeCount, setActualSnowflakeCount] = useState(snowflakeCount);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const snowflakesRef = useRef<SnowflakeProps[]>([]);
   const animationFrameRef = useRef<number>(0);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.matchMedia('(max-width: 768px)').matches;
+      setIsMobile(mobile);
+      setActualSnowflakeCount(mobile ? mobileSnowflakeCount : snowflakeCount);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, [snowflakeCount, mobileSnowflakeCount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -34,14 +53,14 @@ const SnowEffect: React.FC<SnowEffectProps> = ({ snowflakeCount = 100 }) => {
     // Initialize snowflakes
     const initSnowflakes = () => {
       snowflakesRef.current = [];
-      for (let i = 0; i < snowflakeCount; i++) {
+      for (let i = 0; i < actualSnowflakeCount; i++) {
         snowflakesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 4 + 1,
-          speed: Math.random() * 1 + 0.5,
-          opacity: Math.random() * 0.6 + 0.3,
-          wind: Math.random() * 0.5 - 0.25
+          size: isMobile ? Math.random() * 3 + 1 : Math.random() * 4 + 1,
+          speed: isMobile ? Math.random() * 0.8 + 0.3 : Math.random() * 1 + 0.5,
+          opacity: isMobile ? Math.random() * 0.5 + 0.2 : Math.random() * 0.6 + 0.3,
+          wind: isMobile ? Math.random() * 0.3 - 0.15 : Math.random() * 0.5 - 0.25
         });
       }
     };
@@ -96,7 +115,7 @@ const SnowEffect: React.FC<SnowEffectProps> = ({ snowflakeCount = 100 }) => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [snowflakeCount]);
+  }, [actualSnowflakeCount]);
 
   return (
     <canvas 

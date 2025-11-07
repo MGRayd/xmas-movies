@@ -1,10 +1,13 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useIsAdmin } from '../hooks/useIsAdmin'
 import SnowEffect from '../components/SnowEffect'
+import InstallPrompt from '../components/InstallPrompt'
 
 export default function AppLayout() {
   const { currentUser } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   
@@ -38,7 +41,8 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-xmas-bg to-xmas-card bg-opacity-95">
-      <SnowEffect snowflakeCount={150} />
+      <SnowEffect snowflakeCount={150} mobileSnowflakeCount={40} />
+      <InstallPrompt />
       <div className="navbar bg-gradient-to-r from-xmas-card via-xmas-card to-xmas-bg border-b border-xmas-gold px-2 sm:px-4 shadow-lg relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-xmas-gold via-transparent to-xmas-gold opacity-60"></div>
@@ -125,6 +129,14 @@ export default function AppLayout() {
                     <i className="fas fa-file-import"></i>
                   </Link>
                 </li>
+                {isAdmin && (
+                  <li>
+                    <Link to="/admin" className="text-xmas-gold">
+                      Admin Dashboard
+                      <i className="fas fa-crown"></i>
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
           ) : (
@@ -276,6 +288,28 @@ export default function AppLayout() {
                         )}
                       </NavLink>
                     </li>
+                    {isAdmin && (
+                      <li>
+                        <NavLink 
+                          to="/admin" 
+                          onClick={toggleMobileMenu}
+                          className={({isActive}) => 
+                            isActive 
+                              ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
+                              : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
+                          }
+                        >
+                          {({isActive}) => (
+                            <>
+                              <i className="fas fa-crown mr-3 text-xmas-gold"></i> 
+                              <span>Admin Dashboard</span>
+                              {/* Snowflake indicator */}
+                              <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
+                            </>
+                          )}
+                        </NavLink>
+                      </li>
+                    )}
                   </>
                 ) : (
                   <li>

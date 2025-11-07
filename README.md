@@ -100,6 +100,33 @@ firebase deploy --only storage:rules
    firebase deploy
    ```
 
+## Admin Setup
+
+To set up admin users who can access administrative features:
+
+1. Ensure you've set up the service account as described in the "Service Account Setup" section
+2. Run the admin management tool:
+   ```
+   node admin-manager.cjs
+   ```
+3. Follow the prompts to:
+   - List all users
+   - Add admin claim to a user
+   - Remove admin claim from a user
+
+### Admin Features
+
+- **Sort Title Migration**: Admins can update all movies to include sort titles (e.g., "The Grinch" → "Grinch") for better alphabetical sorting
+- Access this feature from the Profile page when logged in as an admin
+
+## Sort Title Feature
+
+The application uses sort titles for better alphabetical sorting of movies, similar to Plex and Emby:
+
+- Movies with titles starting with articles like "The", "A", or "An" are sorted by the word after the article
+- For example, "The Grinch" is displayed as "The Grinch" but sorted as "Grinch"
+- This ensures movies are properly alphabetized regardless of leading articles
+
 ## Project Structure
 
 - `/src/pages` - Main application pages (Home, Movies, MovieDetail, etc.)

@@ -4,6 +4,7 @@ export interface Movie {
   id: string;
   tmdbId?: number;
   title: string;
+  sortTitle?: string; // Title without articles for sorting
   originalTitle?: string;
   releaseDate?: string;
   posterUrl?: string;

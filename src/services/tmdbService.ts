@@ -1,4 +1,5 @@
 import { TMDBMovie } from '../types/movie';
+import { generateSortTitle } from '../utils/titleUtils';
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w500';
@@ -67,6 +68,7 @@ export const formatTMDBMovie = (tmdbMovie: TMDBMovie) => {
   return {
     tmdbId: tmdbMovie.id,
     title: tmdbMovie.title,
+    sortTitle: generateSortTitle(tmdbMovie.title),
     originalTitle: tmdbMovie.original_title,
     releaseDate: tmdbMovie.release_date,
     posterUrl: tmdbMovie.poster_path ? `${POSTER_BASE_URL}${tmdbMovie.poster_path}` : undefined,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -19,18 +19,21 @@ const MoviesPage: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [userMovies, setUserMovies] = useState<{[movieId: string]: UserMovie}>({});
   const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'watched' | 'unwatched' | 'favorites'>('all');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ option: 'title', direction: 'asc' });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchField, setSearchField] = useState<SearchField>('all');
+  
+  // No pagination - show all movies at once
 
   useEffect(() => {
     const fetchMovies = async () => {
       if (!currentUser) return;
       
       try {
-        setLoading(true);
+        setInitialLoading(true);
         
         // Use the utility function to get user movies with details
         const { userMovies: userMoviesMap, movies: moviesData } = await getUserMoviesWithDetails(currentUser.uid);
@@ -41,12 +44,15 @@ const MoviesPage: React.FC = () => {
         console.error('Error fetching movies:', err);
         setError('Failed to load movies');
       } finally {
+        setInitialLoading(false);
         setLoading(false);
       }
     };
 
     fetchMovies();
   }, [currentUser]);
+  
+  // No pagination reset needed
 
   // Handle sort change
   const handleSortChange = (option: SortOption) => {
@@ -70,6 +76,7 @@ const MoviesPage: React.FC = () => {
     switch (searchField) {
       case 'title':
         return movie.title.toLowerCase().includes(query) || 
+               (movie.sortTitle && movie.sortTitle.toLowerCase().includes(query)) ||
                (movie.originalTitle && movie.originalTitle.toLowerCase().includes(query));
       case 'year':
         return movie.releaseDate && movie.releaseDate.substring(0, 4).includes(query);
@@ -78,6 +85,7 @@ const MoviesPage: React.FC = () => {
         // Search in multiple fields
         return (
           movie.title.toLowerCase().includes(query) || 
+          (movie.sortTitle && movie.sortTitle.toLowerCase().includes(query)) ||
           (movie.originalTitle && movie.originalTitle.toLowerCase().includes(query)) ||
           (movie.releaseDate && movie.releaseDate.substring(0, 4).includes(query)) ||
           (movie.overview && movie.overview.toLowerCase().includes(query)) ||
@@ -89,61 +97,76 @@ const MoviesPage: React.FC = () => {
     }
   }, [searchQuery, searchField, userMovies]);
 
-  // Filter movies based on selected filter and search
-  const filteredMovies = movies.filter(movie => {
-    const userMovie = userMovies[movie.id];
+  // Filter and sort movies based on selected filter and search
+  const filteredMovies = useMemo(() => {
+    // Show loading state when applying filters
+    if (initialLoading) return [];
+    setLoading(true);
     
-    // First apply the category filter
-    let passesFilter = true;
-    switch (filter) {
-      case 'watched':
-        passesFilter = userMovie && userMovie.watched;
-        break;
-      case 'unwatched':
-        passesFilter = !userMovie || !userMovie.watched;
-        break;
-      case 'favorites':
-        passesFilter = userMovie && userMovie.favorite;
-        break;
-    }
+    const filtered = movies.filter(movie => {
+      const userMovie = userMovies[movie.id];
+      
+      // First apply the category filter
+      let passesFilter = true;
+      switch (filter) {
+        case 'watched':
+          passesFilter = userMovie && userMovie.watched;
+          break;
+        case 'unwatched':
+          passesFilter = !userMovie || !userMovie.watched;
+          break;
+        case 'favorites':
+          passesFilter = userMovie && userMovie.favorite;
+          break;
+      }
+      
+      // Then apply the search filter
+      return passesFilter && searchMovies(movie);
+    }).sort((a, b) => {
+      const userMovieA = userMovies[a.id];
+      const userMovieB = userMovies[b.id];
+      const direction = sortConfig.direction === 'asc' ? 1 : -1;
+      
+      switch (sortConfig.option) {
+        case 'title':
+          // Use sortTitle if available, otherwise fall back to title
+          const titleA = a.sortTitle || a.title;
+          const titleB = b.sortTitle || b.title;
+          return titleA.localeCompare(titleB) * direction;
+        
+        case 'year':
+          const yearA = a.releaseDate ? parseInt(a.releaseDate.substring(0, 4)) : 0;
+          const yearB = b.releaseDate ? parseInt(b.releaseDate.substring(0, 4)) : 0;
+          return (yearA - yearB) * direction;
+        
+        case 'rating':
+          const ratingA = userMovieA?.rating || 0;
+          const ratingB = userMovieB?.rating || 0;
+          return (ratingA - ratingB) * direction;
+        
+        case 'watched':
+          const watchedA = userMovieA?.watched ? 1 : 0;
+          const watchedB = userMovieB?.watched ? 1 : 0;
+          return (watchedA - watchedB) * direction;
+        
+        case 'added':
+          const addedAtA = userMovieA?.addedAt ? userMovieA.addedAt.getTime() : 0;
+          const addedAtB = userMovieB?.addedAt ? userMovieB.addedAt.getTime() : 0;
+          return (addedAtA - addedAtB) * direction;
+        
+        default:
+          return 0;
+      }
+    });
     
-    // Then apply the search filter
-    return passesFilter && searchMovies(movie);
-  }).sort((a, b) => {
-    const userMovieA = userMovies[a.id];
-    const userMovieB = userMovies[b.id];
-    const direction = sortConfig.direction === 'asc' ? 1 : -1;
-    
-    switch (sortConfig.option) {
-      case 'title':
-        return a.title.localeCompare(b.title) * direction;
-      
-      case 'year':
-        const yearA = a.releaseDate ? parseInt(a.releaseDate.substring(0, 4)) : 0;
-        const yearB = b.releaseDate ? parseInt(b.releaseDate.substring(0, 4)) : 0;
-        return (yearA - yearB) * direction;
-      
-      case 'rating':
-        const ratingA = userMovieA?.rating || 0;
-        const ratingB = userMovieB?.rating || 0;
-        return (ratingA - ratingB) * direction;
-      
-      case 'watched':
-        const watchedA = userMovieA?.watched ? 1 : 0;
-        const watchedB = userMovieB?.watched ? 1 : 0;
-        return (watchedA - watchedB) * direction;
-      
-      case 'added':
-        const addedAtA = userMovieA?.addedAt ? userMovieA.addedAt.getTime() : 0;
-        const addedAtB = userMovieB?.addedAt ? userMovieB.addedAt.getTime() : 0;
-        return (addedAtA - addedAtB) * direction;
-      
-      default:
-        return 0;
-    }
-  });
+    setLoading(false);
+    return filtered;
+  }, [movies, userMovies, filter, sortConfig, searchQuery, searchField, initialLoading]);
+  
+  // Use all filtered movies
+  const currentMovies = filteredMovies;
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-xmas-gold"></div>
@@ -152,15 +175,15 @@ const MoviesPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="font-christmas text-3xl md:text-4xl text-xmas-line">My Christmas Movies</h1>
-        <div className="flex gap-2">
-          <Link to="/random" className="btn btn-primary">
-            <i className="fas fa-random mr-2"></i> Random Movie
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 gap-3">
+        <h1 className="font-christmas text-2xl sm:text-3xl md:text-4xl text-xmas-line">My Christmas Movies</h1>
+        <div className="flex gap-2 w-full sm:w-auto justify-center">
+          <Link to="/random" className="btn btn-primary btn-sm sm:btn-md">
+            <i className="fas fa-random mr-1 sm:mr-2"></i> <span className="hidden xs:inline">Random Movie</span><span className="xs:hidden">Random</span>
           </Link>
-          <Link to="/import" className="btn btn-primary">
-            <i className="fas fa-file-import mr-2"></i> Import Movies
+          <Link to="/import" className="btn btn-primary btn-sm sm:btn-md">
+            <i className="fas fa-file-import mr-1 sm:mr-2"></i> <span className="hidden xs:inline">Import Movies</span><span className="xs:hidden">Import</span>
           </Link>
         </div>
       </div>
@@ -173,21 +196,21 @@ const MoviesPage: React.FC = () => {
       )}
       
       {/* Search bar */}
-      <div className="flex flex-col md:flex-row gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-3">
         <div className="relative flex-grow">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
             <i className="fas fa-search text-gray-400"></i>
           </div>
           <input
             type="text"
-            className="input input-bordered w-full pl-10 pr-16"
+            className="input input-bordered input-sm sm:input-md w-full pl-8 pr-8"
             placeholder="Search movies..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              className="absolute inset-y-0 right-0 pr-2 flex items-center"
               onClick={() => setSearchQuery('')}
             >
               <i className="fas fa-times text-gray-400 hover:text-gray-600"></i>
@@ -195,7 +218,7 @@ const MoviesPage: React.FC = () => {
           )}
         </div>
         <select
-          className="select select-bordered w-full md:w-48"
+          className="select select-bordered select-sm sm:select-md w-full sm:w-36"
           value={searchField}
           onChange={(e) => setSearchField(e.target.value as SearchField)}
         >
@@ -206,7 +229,7 @@ const MoviesPage: React.FC = () => {
       </div>
 
       {/* Filter tabs */}
-      <div className="tabs tabs-boxed mb-4">
+      <div className="tabs tabs-boxed mb-3 text-xs sm:text-sm overflow-x-auto">
         <button 
           className={`tab ${filter === 'all' ? 'tab-active' : ''}`}
           onClick={() => setFilter('all')}
@@ -229,14 +252,15 @@ const MoviesPage: React.FC = () => {
           className={`tab ${filter === 'favorites' ? 'tab-active' : ''}`}
           onClick={() => setFilter('favorites')}
         >
-          Favorites
+          <span className="hidden sm:inline">Favorites</span>
+          <span className="sm:hidden">Favs</span>
         </button>
       </div>
       
       {/* Sort options */}
-      <div className="flex flex-wrap items-center gap-2 mb-6 bg-xmas-card bg-opacity-50 p-3 rounded-lg">
-        <span className="text-sm font-medium mr-2">Sort by:</span>
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-1 mb-3 bg-xmas-card bg-opacity-50 p-2 rounded-lg overflow-x-auto">
+        <span className="text-xs sm:text-sm font-medium mr-1">Sort:</span>
+        <div className="flex flex-nowrap gap-1 overflow-x-auto">
           <button 
             className={`btn btn-xs ${sortConfig.option === 'title' ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => handleSortChange('title')}
@@ -265,7 +289,9 @@ const MoviesPage: React.FC = () => {
             className={`btn btn-xs ${sortConfig.option === 'watched' ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => handleSortChange('watched')}
           >
-            Watched Status {sortConfig.option === 'watched' && (
+            <span className="hidden sm:inline">Watched Status</span>
+            <span className="sm:hidden">Watched</span>
+            {sortConfig.option === 'watched' && (
               <i className={`fas fa-sort-${sortConfig.direction === 'asc' ? 'up' : 'down'} ml-1`}></i>
             )}
           </button>
@@ -273,7 +299,9 @@ const MoviesPage: React.FC = () => {
             className={`btn btn-xs ${sortConfig.option === 'added' ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => handleSortChange('added')}
           >
-            Date Added {sortConfig.option === 'added' && (
+            <span className="hidden sm:inline">Date Added</span>
+            <span className="sm:hidden">Added</span>
+            {sortConfig.option === 'added' && (
               <i className={`fas fa-sort-${sortConfig.direction === 'asc' ? 'up' : 'down'} ml-1`}></i>
             )}
           </button>
@@ -281,21 +309,28 @@ const MoviesPage: React.FC = () => {
       </div>
       
       {/* Movie count */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-sm">
+      <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center mb-3 text-xs sm:text-sm">
+        <div>
           <span className="font-medium">{filteredMovies.length}</span> {filteredMovies.length === 1 ? 'movie' : 'movies'} found
           {searchQuery && (
-            <span className="ml-2 text-xmas-mute">
-              for search: <span className="font-medium">"{searchQuery}"</span>
+            <span className="ml-1 text-xmas-mute">
+              for: <span className="font-medium">"{searchQuery}"</span>
             </span>
           )}
         </div>
         {sortConfig.option && (
-          <div className="text-sm text-xmas-mute">
-            Sorted by <span className="font-medium">{sortConfig.option}</span> ({sortConfig.direction === 'asc' ? 'ascending' : 'descending'})
+          <div className="text-xmas-mute">
+            Sorted by <span className="font-medium">{sortConfig.option}</span> ({sortConfig.direction === 'asc' ? 'asc' : 'desc'})
           </div>
         )}
       </div>
+      
+      {/* Loading indicator for filter/sort operations */}
+      {loading && !initialLoading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-xmas-gold"></div>
+        </div>
+      )}
       
       {filteredMovies.length === 0 ? (
         <div className="bg-xmas-card p-8 rounded-lg text-center">
@@ -317,60 +352,60 @@ const MoviesPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredMovies.map((movie) => {
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+          {currentMovies.map((movie) => {
             const userMovie = userMovies[movie.id];
             return (
               <Link 
                 key={movie.id}
                 to={`/movies/${movie.id}`}
-                className="block transition-transform hover:scale-[1.02] hover:shadow-2xl"
+                className="block transition-transform hover:scale-[1.02] hover:shadow-xl"
               >
-                <div className="card bg-xmas-card shadow-xl h-full">
-                  <figure className="relative">
+                <div className="relative rounded-lg overflow-hidden bg-xmas-card shadow-md h-full flex flex-col">
+                  {/* Poster */}
+                  <div className="relative">
                     {movie.posterUrl ? (
                       <img 
                         src={movie.posterUrl} 
                         alt={movie.title} 
-                        className="w-full object-contain"
+                        className="w-full h-auto object-cover"
                         style={{ aspectRatio: '2/3' }}
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full flex items-center justify-center bg-gray-800" style={{ aspectRatio: '2/3' }}>
-                        <i className="fas fa-film text-4xl text-gray-500"></i>
+                        <i className="fas fa-film text-2xl text-gray-500"></i>
                       </div>
                     )}
                     
-                    {/* Watched badge */}
+                    {/* Watched indicator (checkmark in corner like Emby) */}
                     {userMovie && userMovie.watched && (
-                      <div className="absolute top-2 left-2 badge badge-success">Watched</div>
+                      <div className="absolute top-1 right-1 bg-primary rounded-full p-1 shadow-md">
+                        <i className="fas fa-check text-xs text-white"></i>
+                      </div>
                     )}
                     
-                    {/* Favorite badge */}
+                    {/* Favorite indicator */}
                     {userMovie && userMovie.favorite && (
-                      <div className="absolute top-2 right-2 text-yellow-400">
-                        <i className="fas fa-star"></i>
+                      <div className="absolute top-1 left-1 text-yellow-400 drop-shadow-md">
+                        <i className="fas fa-star text-sm"></i>
                       </div>
                     )}
-                  </figure>
-                  <div className="card-body">
-                    <h2 className="card-title font-christmas">{movie.title}</h2>
-                    <p className="text-sm text-gray-400">{movie.releaseDate?.substring(0, 4)}</p>
-                    
-                    {/* Rating */}
-                    {userMovie && userMovie.rating && (
-                      <div className="flex items-center mt-2">
-                        <span className="text-yellow-400 mr-1">
-                          <i className="fas fa-star"></i>
-                        </span>
-                        <span>{userMovie.rating}/10</span>
-                      </div>
-                    )}
-                    
-                    <div className="card-actions justify-end mt-4">
-                      <span className="btn btn-primary btn-sm">
-                        View Details
-                      </span>
+                  </div>
+                  
+                  {/* Title and year - simplified for mobile */}
+                  <div className="p-1 sm:p-2 flex-grow flex flex-col">
+                    <h3 className="text-xs sm:text-sm font-medium line-clamp-2">{movie.title}</h3>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-xs text-gray-400">{movie.releaseDate?.substring(0, 4)}</p>
+                      {userMovie && userMovie.rating && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-400 mr-0.5">
+                            <i className="fas fa-star text-xs"></i>
+                          </span>
+                          <span className="text-xs">{userMovie.rating}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -379,6 +414,8 @@ const MoviesPage: React.FC = () => {
           })}
         </div>
       )}
+      
+      {/* No pagination - all movies shown at once */}
     </div>
   );
 };

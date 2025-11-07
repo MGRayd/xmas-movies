@@ -3,16 +3,20 @@ import { Link } from 'react-router-dom';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { useIsAdmin } from '../hooks/useIsAdmin';
 import { Movie, UserMovie } from '../types/movie';
 import { getUserMovies, getUserMoviesWithDetails } from '../utils/userMovieUtils';
 import { exportUserMoviesToCSV } from '../utils/exportUtils';
+import { updateMoviesWithSortTitles } from '../utils/migrationUtils';
 
 const ProfilePage: React.FC = () => {
   const { currentUser, userProfile, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   
   const [tmdbApiKey, setTmdbApiKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [migrationLoading, setMigrationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -122,6 +126,28 @@ const ProfilePage: React.FC = () => {
       setError(err.message || 'Failed to export movies');
     } finally {
       setExportLoading(false);
+    }
+  };
+  
+  const handleUpdateSortTitles = async () => {
+    try {
+      setMigrationLoading(true);
+      setError(null);
+      
+      // Run the migration
+      const result = await updateMoviesWithSortTitles();
+      
+      setSuccess(`Sort titles updated for ${result.updated} out of ${result.total} movies.`);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+    } catch (err: any) {
+      console.error('Error updating sort titles:', err);
+      setError(err.message || 'Failed to update sort titles');
+    } finally {
+      setMigrationLoading(false);
     }
   };
   
@@ -284,6 +310,36 @@ const ProfilePage: React.FC = () => {
                 </Link>
               </div>
             </div>
+            
+            {isAdmin && (
+              <>
+                <div className="divider"></div>
+                
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold mb-2">Admin Tools</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-1">Sort Title Migration</h4>
+                      <p className="text-sm mb-2">
+                        Update all movies to include sort titles (e.g., "The Grinch" → "Grinch") for better alphabetical sorting.
+                      </p>
+                      <button 
+                        className="btn btn-outline btn-warning btn-sm"
+                        onClick={handleUpdateSortTitles}
+                        disabled={migrationLoading}
+                      >
+                        {migrationLoading ? (
+                          <span className="loading loading-spinner loading-sm mr-2"></span>
+                        ) : (
+                          <i className="fas fa-sort-alpha-down mr-2"></i>
+                        )}
+                        Update Sort Titles
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

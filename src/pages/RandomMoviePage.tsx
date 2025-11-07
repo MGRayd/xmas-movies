@@ -151,6 +151,7 @@ const RandomMoviePage: React.FC = () => {
                         alt={randomMovie.title} 
                         className="w-full object-contain"
                         style={{ aspectRatio: '2/3', maxHeight: '500px' }}
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full flex items-center justify-center bg-gray-800" style={{ aspectRatio: '2/3', maxHeight: '500px' }}>
