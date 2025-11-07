@@ -1,5 +1,5 @@
 {
-  "name": "xmas-qui",
+  "name": "xmas-movies",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,13 +19,16 @@
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.23.1",
     "remark-gfm": "^4.0.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/react": "^18.2.42",
     "@types/react-dom": "^18.2.17",
+    "@types/uuid": "^9.0.8",
+    "@types/xlsx": "^0.0.36",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
     "daisyui": "^4.12.10",

@@ -1,13 +1,14 @@
-# Christmas Quiz App (React + Firebase)
+# Christmas Movie Database (React + Firebase)
 
-A festive Christmas-themed quiz application with a public quiz interface and an admin panel to manage questions and view results.
+A festive Christmas-themed movie database application where users can track, rate, and discover Christmas movies.
 
 ## Features
 
 - 🎄 Festive Christmas theme with snowfall animation
-- 🎮 Interactive quiz with timed questions
-- 🏆 Public leaderboard for players to compete
-- 🔐 Admin panel to manage questions and view results
+- 🎬 Track and rate your Christmas movie collection
+- 🔍 Search and discover Christmas movies using TMDB integration
+- 📊 Import movies from Excel spreadsheets
+- 🎲 Random movie picker for unwatched movies
 - 📱 Fully responsive design for all devices
 
 ## Quick Start
@@ -24,24 +25,27 @@ A festive Christmas-themed quiz application with a public quiz interface and an 
 
 3. Open your browser at `http://localhost:5173`
 
-## Admin Setup
+## User Authentication Setup
 
 1. Enable Google Authentication in your Firebase project:
    - Go to the Firebase console > Authentication > Sign-in method
    - Enable Google as a sign-in provider
    - Add your authorized domains
 
-2. After signing in with Google, add the user to the `admins` collection in Firestore:
-   - Create a document in the `admins` collection
-   - Use the user's UID as the document ID
-   - You can find the UID in the Firebase Authentication users list
+## TMDB API Setup
+
+1. Create an account on [The Movie Database (TMDB)](https://www.themoviedb.org/)
+2. Go to your account settings > API
+3. Request an API key (select Developer option)
+4. Once approved, copy your API key
+5. In the app, go to your Profile page and add your TMDB API key
 
 ## Firebase Configuration
 
 This project uses Firebase for:
-- Authentication (admin login)
-- Firestore (storing questions and scores)
-- Storage (storing question images)
+- Authentication (user login)
+- Firestore (storing movies and user data)
+- Storage (storing movie posters and other images)
 
 ### Service Account Setup
 
@@ -98,10 +102,14 @@ firebase deploy --only storage:rules
 
 ## Project Structure
 
-- `/src/pages` - Main application pages
+- `/src/pages` - Main application pages (Home, Movies, MovieDetail, etc.)
 - `/src/components` - Reusable components
+- `/src/contexts` - React context providers (Auth)
 - `/src/hooks` - Custom React hooks
+- `/src/services` - API services (TMDB)
+- `/src/types` - TypeScript type definitions
 - `/src/ui` - UI components and layout
+- `/src/utils` - Utility functions
 
 ## License
 

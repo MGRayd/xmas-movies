@@ -6,32 +6,58 @@ import AppLayout from './ui/AppLayout'
 import './index.css'
 import './ui/typography.css'
 
+// Import authentication context
+import { AuthProvider } from './contexts/AuthContext'
+
+// Import components
+import ProtectedRoute from './components/ProtectedRoute'
+
 // Import pages
 import HomePage from './pages/HomePage'
-import QuizPage from './pages/QuizPage'
+import LoginPage from './pages/LoginPage'
+
+// Movie pages (to be created)
+import MoviesPage from './pages/MoviesPage'
+import MovieDetailPage from './pages/MovieDetailPage'
+import MovieImportPage from './pages/MovieImportPage'
+import RandomMoviePage from './pages/RandomMoviePage'
+import ProfilePage from './pages/ProfilePage'
+
+// Admin pages (keeping these for reference, will be updated later)
 import AdminLoginPage from './pages/AdminLoginPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
-import AdminResultsPage from './pages/AdminResultsPage'
-import AdminRoundsPage from './pages/AdminRoundsPage'
-import AdminRoundQuestionsPage from './pages/AdminRoundQuestionsPage'
 
 const router = createBrowserRouter([
   { 
     element: <AppLayout />, 
     children: [
+      // Public routes
       { path: '/', element: <HomePage /> },
-      { path: '/quiz', element: <QuizPage /> },
+      { path: '/login', element: <LoginPage /> },
+      
+      // Protected routes
+      { 
+        element: <ProtectedRoute />,
+        children: [
+          { path: '/movies', element: <MoviesPage /> },
+          { path: '/movies/:movieId', element: <MovieDetailPage /> },
+          { path: '/import', element: <MovieImportPage /> },
+          { path: '/random', element: <RandomMoviePage /> },
+          { path: '/profile', element: <ProfilePage /> },
+        ]
+      },
+      
+      // Admin routes (keeping these for reference)
       { path: '/admin/login', element: <AdminLoginPage /> },
       { path: '/admin', element: <AdminDashboardPage /> },
-      { path: '/admin/results', element: <AdminResultsPage /> },
-      { path: '/admin/rounds', element: <AdminRoundsPage /> },
-      { path: '/admin/questions/:roundId', element: <AdminRoundQuestionsPage /> },
     ] 
   }
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>
 )

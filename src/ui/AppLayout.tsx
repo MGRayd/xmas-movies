@@ -1,10 +1,10 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { useIsAdmin } from '../hooks/useIsAdmin'
+import { useAuth } from '../contexts/AuthContext'
 import SnowEffect from '../components/SnowEffect'
 
 export default function AppLayout() {
-  const { isAdmin } = useIsAdmin();
+  const { currentUser } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   
@@ -65,7 +65,7 @@ export default function AppLayout() {
               </div>
             </div>
             <div className="ml-3 font-christmas text-xl sm:text-2xl bg-gradient-to-br from-xmas-gold via-xmas-snow to-xmas-gold bg-clip-text text-transparent font-bold">
-              PACT - Christmas Quiz
+              Christmas Movies
             </div>
           </Link>
           
@@ -74,21 +74,57 @@ export default function AppLayout() {
             <div className="w-8 h-8 flex items-center justify-center rounded-full bg-xmas-card border border-xmas-gold overflow-hidden">
               <img src="/Santa.png" alt="Santa" className="w-full h-full object-cover" />
             </div>
-            <span className="ml-2 font-christmas text-lg text-xmas-gold">PACT - Christmas Quiz</span>
+            <span className="ml-2 font-christmas text-lg text-xmas-gold">Christmas Movies</span>
           </Link>
         </div>
         
-        {/* Push admin to the right */}
+        {/* Push user menu to the right */}
         <div className="flex-1"></div>
         
         <div className="flex items-center gap-1 sm:gap-2">
-          {isAdmin && (
-            <Link to="/admin" className="relative group overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-xmas-line to-xmas-gold opacity-70 blur-sm group-hover:opacity-100 transition duration-300"></div>
-              <div className="relative btn btn-sm bg-xmas-card border border-xmas-gold px-3 py-1 flex items-center">
-                <i className="fas fa-lock mr-2 text-xmas-gold"></i>
-                <span className="font-christmas">Admin</span>
-              </div>
+          {currentUser ? (
+            <div className="dropdown dropdown-end">
+              <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+                <div className="w-10 rounded-full border border-xmas-gold">
+                  {currentUser.photoURL ? (
+                    <img src={currentUser.photoURL} alt="Profile" />
+                  ) : (
+                    <div className="bg-xmas-card flex items-center justify-center h-full">
+                      <i className="fas fa-user text-xmas-gold"></i>
+                    </div>
+                  )}
+                </div>
+              </label>
+              <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-xmas-card rounded-box w-52 border border-xmas-gold">
+                <li>
+                  <Link to="/profile" className="justify-between">
+                    Profile
+                    <i className="fas fa-user-circle"></i>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/movies">
+                    My Movies
+                    <i className="fas fa-film"></i>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/random">
+                    Random Movie
+                    <i className="fas fa-random"></i>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/import">
+                    Import Movies
+                    <i className="fas fa-file-import"></i>
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          ) : (
+            <Link to="/login" className="btn btn-primary btn-sm">
+              <i className="fas fa-sign-in-alt mr-1"></i> Sign In
             </Link>
           )}
         </div>
@@ -111,7 +147,7 @@ export default function AppLayout() {
                 <img src="/Santa.png" alt="Santa" className="w-full h-full object-cover" />
               </div>
               <div className="ml-3 font-christmas text-xl bg-gradient-to-br from-xmas-gold via-xmas-snow to-xmas-gold bg-clip-text text-transparent font-bold">
-                Xmas Quiz
+                Christmas Movies
               </div>
             </div>
             <button 
@@ -153,86 +189,112 @@ export default function AppLayout() {
                     )}
                   </NavLink>
                 </li>
-                <li>
-                  <NavLink 
-                    to="/quiz" 
-                    onClick={toggleMobileMenu}
-                    className={({isActive}) => 
-                      isActive 
-                        ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
-                        : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
-                    }
-                  >
-                    {({isActive}) => (
-                      <>
-                        <i className="fas fa-question-circle mr-3 text-xmas-gold"></i> 
-                        <span>Take Quiz</span>
-                        {/* Snowflake indicator */}
-                        <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
-                      </>
-                    )}
-                  </NavLink>
-                </li>
+                {currentUser ? (
+                  <>
+                    <li>
+                      <NavLink 
+                        to="/movies" 
+                        onClick={toggleMobileMenu}
+                        className={({isActive}) => 
+                          isActive 
+                            ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
+                            : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
+                        }
+                      >
+                        {({isActive}) => (
+                          <>
+                            <i className="fas fa-film mr-3 text-xmas-gold"></i> 
+                            <span>My Movies</span>
+                            {/* Snowflake indicator */}
+                            <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink 
+                        to="/random" 
+                        onClick={toggleMobileMenu}
+                        className={({isActive}) => 
+                          isActive 
+                            ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
+                            : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
+                        }
+                      >
+                        {({isActive}) => (
+                          <>
+                            <i className="fas fa-random mr-3 text-xmas-gold"></i> 
+                            <span>Random Movie</span>
+                            {/* Snowflake indicator */}
+                            <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink 
+                        to="/import" 
+                        onClick={toggleMobileMenu}
+                        className={({isActive}) => 
+                          isActive 
+                            ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
+                            : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
+                        }
+                      >
+                        {({isActive}) => (
+                          <>
+                            <i className="fas fa-file-import mr-3 text-xmas-gold"></i> 
+                            <span>Import Movies</span>
+                            {/* Snowflake indicator */}
+                            <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink 
+                        to="/profile" 
+                        onClick={toggleMobileMenu}
+                        className={({isActive}) => 
+                          isActive 
+                            ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
+                            : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
+                        }
+                      >
+                        {({isActive}) => (
+                          <>
+                            <i className="fas fa-user-circle mr-3 text-xmas-gold"></i> 
+                            <span>Profile</span>
+                            {/* Snowflake indicator */}
+                            <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                  </>
+                ) : (
+                  <li>
+                    <NavLink 
+                      to="/login" 
+                      onClick={toggleMobileMenu}
+                      className={({isActive}) => 
+                        isActive 
+                          ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
+                          : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
+                      }
+                    >
+                      {({isActive}) => (
+                        <>
+                          <i className="fas fa-sign-in-alt mr-3 text-xmas-gold"></i> 
+                          <span>Sign In</span>
+                          {/* Snowflake indicator */}
+                          <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
+                        </>
+                      )}
+                    </NavLink>
+                  </li>
+                )}
               </ul>
-            </div>
-            
-            {isAdmin && (
-              <div>
-                <h3 className="font-christmas text-xl text-xmas-gold mb-4 pl-2 border-l-2 border-xmas-line">
-                  Admin
-                </h3>
-                <ul className="space-y-3">
-                  <li>
-                    <NavLink 
-                      to="/admin" 
-                      onClick={toggleMobileMenu}
-                      className={({isActive}) => 
-                        isActive 
-                          ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
-                          : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
-                      }
-                    >
-                      {({isActive}) => (
-                        <>
-                          <i className="fas fa-cog mr-3 text-xmas-gold"></i> 
-                          <span>Dashboard</span>
-                          {/* Snowflake indicator */}
-                          <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
-                        </>
-                      )}
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink 
-                      to="/admin/results" 
-                      onClick={toggleMobileMenu}
-                      className={({isActive}) => 
-                        isActive 
-                          ? 'flex items-center p-2 pl-3 rounded-md bg-gradient-to-r from-xmas-card to-transparent border-l-2 border-xmas-gold text-xmas-gold font-medium' 
-                          : 'flex items-center p-2 pl-3 rounded-md hover:bg-xmas-card hover:bg-opacity-50 text-xmas-text hover:text-xmas-gold transition-all duration-200'
-                      }
-                    >
-                      {({isActive}) => (
-                        <>
-                          <i className="fas fa-trophy mr-3 text-xmas-gold"></i> 
-                          <span>Results</span>
-                          {/* Snowflake indicator */}
-                          <i className={`fas fa-snowflake ml-auto text-xmas-gold opacity-70 ${isActive ? 'visible' : 'invisible'}`}></i>
-                        </>
-                      )}
-                    </NavLink>
-                  </li>
-                </ul>
-              </div>
-            )}
-            
-            {/* Decorative element at bottom of menu */}
-            <div className="mt-8 pt-4 border-t border-xmas-gold border-opacity-30 flex justify-center">
-              <div className="flex space-x-3">
-                <i className="fas fa-snowflake text-xmas-gold opacity-60"></i>
-                <i className="fas fa-tree text-xmas-gold opacity-60"></i>
-                <i className="fas fa-gift text-xmas-gold opacity-60"></i>
-              </div>
             </div>
           </div>
         </div>

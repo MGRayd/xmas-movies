@@ -5,12 +5,12 @@ import { getStorage } from 'firebase/storage'
 import { getFunctions } from 'firebase/functions'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB0Qjs2dvrcJAZeWUd9SyPVnTXufRImsi4",
-  authDomain: "xmas-quiz-8c02e.firebaseapp.com",
-  projectId: "xmas-quiz-8c02e",
-  storageBucket: "xmas-quiz-8c02e.firebasestorage.app",
-  messagingSenderId: "978823764359",
-  appId: "1:978823764359:web:dfbd31fbac09f62a82db22"
+  apiKey: "AIzaSyAnEPcQISz9FY68mib-0StN6NQtTF3oz1c",
+  authDomain: "xmas-movies.firebaseapp.com",
+  projectId: "xmas-movies",
+  storageBucket: "xmas-movies.firebasestorage.app",
+  messagingSenderId: "721037810395",
+  appId: "1:721037810395:web:1126b377adcc225c944afe"
 };
 
 const app = initializeApp(firebaseConfig)
