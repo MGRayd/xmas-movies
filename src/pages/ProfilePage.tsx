@@ -268,16 +268,16 @@ const ProfilePage: React.FC = () => {
                 <label className="label">
                   <span className="label-text">API Key</span>
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input 
                     type="text" 
-                    className="input input-bordered flex-1" 
+                    className="input input-bordered flex-1 h-12 text-lg" 
                     value={tmdbApiKey}
                     onChange={(e) => setTmdbApiKey(e.target.value)}
                     placeholder="Enter your TMDB API key"
                   />
                   <button 
-                    className="btn btn-primary"
+                    className="btn btn-primary w-full sm:w-auto"
                     onClick={handleSaveApiKey}
                     disabled={loading}
                   >

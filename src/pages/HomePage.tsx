@@ -9,7 +9,7 @@ const HomePage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
         <h1 className="font-christmas text-5xl md:text-7xl text-xmas-line mb-4">
-          Christmas Movie Database
+          My Christmas Movie
         </h1>
         <p className="text-xl md:text-2xl text-xmas-snow mb-8">Track, rate, and discover your favorite Christmas movies!</p>
         
