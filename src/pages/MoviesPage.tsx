@@ -168,11 +168,6 @@ useEffect(() => {
           const watchedB = userMovieB?.watched ? 1 : 0;
           return (watchedA - watchedB) * direction;
         
-        case 'added':
-          const addedAtA = userMovieA?.addedAt ? userMovieA.addedAt.getTime() : 0;
-          const addedAtB = userMovieB?.addedAt ? userMovieB.addedAt.getTime() : 0;
-          return (addedAtA - addedAtB) * direction;
-        
         default:
           return 0;
       }
@@ -266,7 +261,7 @@ useEffect(() => {
           className={`tab ${filter === 'unwatched' ? 'tab-active' : ''}`}
           onClick={() => setFilter('unwatched')}
         >
-          Unwatched
+          Watch
         </button>
         <button 
           className={`tab ${filter === 'favorites' ? 'tab-active' : ''}`}
@@ -312,16 +307,6 @@ useEffect(() => {
             <span className="hidden sm:inline">Watched Status</span>
             <span className="sm:hidden">Watched</span>
             {sortConfig.option === 'watched' && (
-              <i className={`fas fa-sort-${sortConfig.direction === 'asc' ? 'up' : 'down'} ml-1`}></i>
-            )}
-          </button>
-          <button 
-            className={`btn btn-xs ${sortConfig.option === 'added' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => handleSortChange('added')}
-          >
-            <span className="hidden sm:inline">Date Added</span>
-            <span className="sm:hidden">Added</span>
-            {sortConfig.option === 'added' && (
               <i className={`fas fa-sort-${sortConfig.direction === 'asc' ? 'up' : 'down'} ml-1`}></i>
             )}
           </button>

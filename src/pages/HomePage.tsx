@@ -1,10 +1,50 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { collectionGroup, query, where, getCountFromServer, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const HomePage: React.FC = () => {
   const { currentUser } = useAuth();
+  const [now, setNow] = useState<Date>(new Date());
+  const [watchedTotal, setWatchedTotal] = useState<number | null>(null);
   
+// live clock for countdown
+useEffect(() => {
+  const t = setInterval(() => setNow(new Date()), 1000);
+  return () => clearInterval(t);
+}, []);
+
+// compute next Christmas (Dec 25)
+const target = useMemo(() => {
+  const y = now.getFullYear();
+  const christmas = new Date(y, 11, 25, 0, 0, 0); // month is 0-based
+  return now > christmas ? new Date(y + 1, 11, 25, 0, 0, 0) : christmas;
+}, [now]);
+
+const countdown = useMemo(() => {
+  const diff = target.getTime() - now.getTime();
+  const totalSeconds = Math.max(0, Math.floor(diff / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds };
+}, [now, target]);
+
+// live watched total
+useEffect(() => {
+  const ref = doc(db, 'stats', 'global');
+
+  // realtime (recommended)
+  const unsub = onSnapshot(ref, (snap) => {
+    const data = snap.data();
+    setWatchedTotal(typeof data?.watchedTotal === 'number' ? data.watchedTotal : 0);
+  });
+
+  return () => unsub();
+}, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -43,6 +83,33 @@ const HomePage: React.FC = () => {
       {/* Subtle decoration */}
       <div className="w-full max-w-4xl mx-auto mb-8">
         <div className="h-px bg-gradient-to-r from-transparent via-xmas-gold to-transparent"></div>
+      </div>
+
+      {/* Stats & Countdown */}
+      <div className="bg-xmas-card rounded-lg shadow-xl p-6 mb-12 border border-xmas-gold border-opacity-30 relative">
+        <h2 className="font-christmas text-3xl text-xmas-gold text-center mb-6">
+          Countdown to Christmas
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-6 items-stretch">
+          {/* Countdown */}
+          <div className="bg-xmas-card bg-opacity-70 p-6 rounded-lg shadow-md border-l-2 border-xmas-line flex flex-col items-center justify-center">
+            <div className="text-5xl md:text-6xl font-bold text-xmas-line mb-2">
+              {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
+            </div>
+            <p className="text-xmas-text text-opacity-80">until Christmas Day</p>
+          </div>
+
+          {/* Watched total */}
+          <div className="bg-xmas-card bg-opacity-70 p-6 rounded-lg shadow-md border-l-2 border-xmas-gold flex flex-col items-center justify-center">
+            <div className="text-5xl md:text-6xl font-bold text-xmas-gold mb-2">
+              {watchedTotal ?? '–'}
+            </div>
+            <p className="text-xmas-text text-opacity-80 text-center">
+              movies watched by everyone
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Features section */}
