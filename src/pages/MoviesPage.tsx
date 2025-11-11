@@ -5,9 +5,10 @@ import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Movie, UserMovie } from '../types/movie';
 import { getUserMoviesWithDetails } from '../utils/userMovieUtils';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 type SortOption = 'title' | 'year' | 'rating' | 'watched' | 'added';
-type SearchField = 'title' | 'year' | 'all';
+type SearchField = 'title' | 'year' | 'cast' | 'all';
 
 interface SortConfig {
   option: SortOption;
@@ -25,9 +26,21 @@ const MoviesPage: React.FC = () => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ option: 'title', direction: 'asc' });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchField, setSearchField] = useState<SearchField>('all');
+  const location = useLocation();
+  const navigate = useNavigate();
   
-  // No pagination - show all movies at once
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const q = params.get('q') || '';
+  const field = (params.get('field') as SearchField) || 'all';
 
+  // only set if different to avoid loops
+  if (q !== searchQuery) setSearchQuery(q);
+  if (field !== searchField) setSearchField(field);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [location.search]);
+
+  // No pagination - show all movies at once
   useEffect(() => {
     const fetchMovies = async () => {
       if (!currentUser) return;
@@ -71,6 +84,10 @@ const MoviesPage: React.FC = () => {
     if (!searchQuery.trim()) return true;
     
     const query = searchQuery.toLowerCase().trim();
+    const tokens = query.split(',').map(t => t.trim()).filter(Boolean);
+    const inCast = (q: string) =>
+      movie.cast && movie.cast.some(actor => actor.toLowerCase().includes(q));
+
     const userMovie = userMovies[movie.id];
     
     switch (searchField) {
@@ -80,6 +97,8 @@ const MoviesPage: React.FC = () => {
                (movie.originalTitle && movie.originalTitle.toLowerCase().includes(query));
       case 'year':
         return movie.releaseDate && movie.releaseDate.substring(0, 4).includes(query);
+      case 'cast':
+        return tokens.length ? tokens.some(t => inCast(t)) : inCast(query);
       case 'all':
       default:
         // Search in multiple fields
@@ -225,6 +244,7 @@ const MoviesPage: React.FC = () => {
           <option value="all">All Fields</option>
           <option value="title">Title Only</option>
           <option value="year">Year Only</option>
+          <option value="cast">Cast Only</option>
         </select>
       </div>
 

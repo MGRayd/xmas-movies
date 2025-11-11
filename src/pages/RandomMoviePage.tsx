@@ -58,7 +58,7 @@ const RandomMoviePage: React.FC = () => {
     
     // Create a spinning effect
     let counter = 0;
-    const totalSpins = 20;
+    const totalSpins = 25;
     const interval = setInterval(() => {
       const randomIndex = Math.floor(Math.random() * eligibleMovies.length);
       setRandomMovie(eligibleMovies[randomIndex]);
@@ -176,9 +176,9 @@ const RandomMoviePage: React.FC = () => {
                     <h2 className="card-title text-2xl font-christmas">{randomMovie.title}</h2>
                     <p className="text-gray-400">{randomMovie.releaseDate?.substring(0, 4)}</p>
                     
-                    {randomMovie.overview && (
+                    {/*{randomMovie.overview && (
                       <p className="mt-2">{randomMovie.overview}</p>
-                    )}
+                    )}*/}
                     
                     <div className="card-actions justify-end mt-4">
                       <Link 

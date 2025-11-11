@@ -286,7 +286,19 @@ const MovieDetailPage: React.FC = () => {
           {movie.cast && movie.cast.length > 0 && (
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-2">Cast</h2>
-              <p>{movie.cast.slice(0, 10).join(', ')}</p>
+              <p className="flex flex-wrap gap-1">
+                {movie.cast.slice(0, 10).map((name, i) => (
+                  <React.Fragment key={name}>
+                    <Link
+                      to={`/movies?q=${encodeURIComponent(name)}&field=cast`}
+                      className="link link-primary"
+                    >
+                      {name}
+                    </Link>
+                    {i < Math.min(movie.cast.length, 10) - 1 && <span>,&nbsp;</span>}
+                  </React.Fragment>
+                ))}
+              </p>
             </div>
           )}
           
