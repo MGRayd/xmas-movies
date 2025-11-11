@@ -267,7 +267,7 @@ useEffect(() => {
           className={`tab ${filter === 'favorites' ? 'tab-active' : ''}`}
           onClick={() => setFilter('favorites')}
         >
-          <span className="hidden sm:inline">Favorites</span>
+          <span className="hidden sm:inline">Favourites</span>
           <span className="sm:hidden">Favs</span>
         </button>
       </div>

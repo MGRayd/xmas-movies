@@ -47,6 +47,34 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && 
         (resource.data.userId == request.auth.uid || isAdmin());
     }
+	
+	// Global stats document (for aggregate counters like watchedTotal)
+    match /stats/global {
+      // Allow anyone to read the total (or require auth if you prefer)
+      allow read: if true;
+
+      // Allow create by authenticated users (ensures doc exists)
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['watchedTotal','updatedAt'])
+        && request.resource.data.watchedTotal is int
+        && request.resource.data.watchedTotal >= 0;
+
+      // Allow atomic +1 / -1 updates by authenticated users
+      allow update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['watchedTotal','updatedAt'])
+        && request.resource.data.watchedTotal is int
+        && resource.data.watchedTotal is int
+        && (
+          request.resource.data.watchedTotal ==
+            resource.data.watchedTotal + 1
+          ||
+          request.resource.data.watchedTotal ==
+            resource.data.watchedTotal - 1
+        );
+
+      // Prevent deletes
+      allow delete: if false;
+    }
     
     // Admin collection - only admins can access
     match /admins/{adminId} {

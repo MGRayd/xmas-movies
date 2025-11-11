@@ -51,7 +51,7 @@ useEffect(() => {
         <h1 className="font-christmas text-5xl md:text-7xl text-xmas-line mb-4">
           My Christmas Movies
         </h1>
-        <p className="text-xl md:text-2xl text-xmas-snow mb-8">Track, rate, and discover your favorite Christmas movies!</p>
+        <p className="text-xl md:text-2xl text-xmas-snow mb-8">Track, rate, and discover your favourite Christmas movies!</p>
         
         <div className="flex flex-col md:flex-row justify-center gap-6 mb-12">
           {currentUser ? (
