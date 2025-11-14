@@ -194,7 +194,6 @@ const ProfilePage: React.FC = () => {
                 </div>
               )}
               <h2 className="text-xl font-bold">{userProfile.displayName}</h2>
-              <p className="text-gray-400">{userProfile.email}</p>
             </div>
             
             <div className="divider"></div>
