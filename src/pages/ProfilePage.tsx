@@ -263,8 +263,8 @@ const ProfilePage: React.FC = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-bold mb-2">TMDB API Key</h3>
                   <p className="mb-4">
-                    Your TMDB API key is used to search for movies and fetch movie details.
-                    If you don't have one, you can get it for free from{' '}
+                    Your TMDB API key is used to fetch movies, cast and other details.
+                    {' '}
                     <a
                       href="https://www.themoviedb.org/settings/api"
                       target="_blank"
