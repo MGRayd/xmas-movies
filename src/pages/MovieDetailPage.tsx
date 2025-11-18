@@ -494,7 +494,7 @@ const MovieDetailPage: React.FC = () => {
           
           <div className="flex justify-end">
             <button 
-              className="btn btn-primary"
+              className="btn btn-primary btn-sm sm:btn-md"
               onClick={handleSave}
               disabled={saving}
             >

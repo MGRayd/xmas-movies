@@ -269,7 +269,7 @@ const MovieImportPage: React.FC = () => {
 
             <div className="mt-4 flex justify-end gap-2">
               <button
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm sm:btn-md"
                 onClick={addToCollection}
                 disabled={loading}
               >
