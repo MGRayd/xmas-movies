@@ -278,8 +278,8 @@ const MovieDetailPage: React.FC = () => {
           <span>Movie not found</span>
         </div>
         <div className="mt-4">
-          <Link to="/movies" className="btn btn-primary">
-            Back to Movies
+          <Link to="/movies" className="btn btn-primary btn-sm sm:btn-md">
+            <i className="fas fa-arrow-left mr-2"></i> Back to Movies
           </Link>
         </div>
       </div>
@@ -289,7 +289,7 @@ const MovieDetailPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
-        <Link to="/movies" className="btn btn-ghost">
+        <Link to="/movies" className="btn btn-primary btn-sm sm:btn-md">
           <i className="fas fa-arrow-left mr-2"></i> Back to Movies
         </Link>
       </div>
