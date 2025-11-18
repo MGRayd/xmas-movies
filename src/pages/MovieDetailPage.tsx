@@ -17,6 +17,9 @@ const MovieDetailPage: React.FC = () => {
   
   // Get the actual movie ID from the URL query parameter
   const movieId = getMovieIdFromUrl(location.search);
+
+  const origin = (location.state as { from?: string } | null)?.from;
+  const backHref = origin === 'import' ? '/import' : '/movies';
   
   const [movie, setMovie] = useState<Movie | null>(null);
   const [userMovie, setUserMovie] = useState<UserMovie | null>(null);
@@ -278,7 +281,7 @@ const MovieDetailPage: React.FC = () => {
           <span>Movie not found</span>
         </div>
         <div className="mt-4">
-          <Link to="/movies" className="btn btn-primary btn-sm sm:btn-md">
+          <Link to={backHref} className="btn btn-primary btn-sm sm:btn-md">
             <i className="fas fa-arrow-left mr-2"></i> Back to Movies
           </Link>
         </div>
@@ -289,7 +292,7 @@ const MovieDetailPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
-        <Link to="/movies" className="btn btn-primary btn-sm sm:btn-md">
+        <Link to={backHref} className="btn btn-primary btn-sm sm:btn-md">
           <i className="fas fa-arrow-left mr-2"></i> Back to Movies
         </Link>
       </div>

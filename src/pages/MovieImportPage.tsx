@@ -147,7 +147,7 @@ const MovieImportPage: React.FC = () => {
         </Link>
       </div>
       <h1 className="font-christmas text-3xl md:text-4xl text-xmas-line mb-6">
-        Import Movies
+        Add Movies
       </h1>
 
       {msg && (

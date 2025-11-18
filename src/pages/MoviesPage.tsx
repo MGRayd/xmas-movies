@@ -365,6 +365,7 @@ useEffect(() => {
               <Link 
                 key={movie.id}
                 to={createMovieUrl(movie.title, movie.id)}
+                state={{ from: 'movies' }}
                 className="block transition-transform hover:scale-[1.02] hover:shadow-xl"
               >
                 <div className="relative rounded-lg overflow-hidden bg-xmas-card shadow-md h-full flex flex-col">

@@ -1,9 +1,11 @@
 // src/components/imports/LocalSearchPanel.tsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { TMDBMovie } from '../../types/movie';
 import { posterSrc } from '../../utils/matching';
+import { createMovieUrl } from '../../utils/urlUtils';
 
 type LocalMovieLike = TMDBMovie & {
   source?: 'local';
@@ -22,6 +24,7 @@ type Props = {
 };
 
 const LocalSearchPanel: React.FC<Props> = ({ onSelect, userMovieIds }) => {
+  const navigate = useNavigate();
   const [allMovies, setAllMovies] = useState<LocalMovieLike[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -260,9 +263,17 @@ const LocalSearchPanel: React.FC<Props> = ({ onSelect, userMovieIds }) => {
               <div
                 key={m.firestoreId || m.id}
                 className={`block transition-transform hover:scale-[1.02] hover:shadow-xl ${
-                  isOwned ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                  isOwned ? 'opacity-60 cursor-pointer' : 'cursor-pointer'
                 }`}
-                onClick={() => !isOwned && onSelect(m)}
+                onClick={() => {
+                  if (isOwned && m.firestoreId) {
+                    navigate(createMovieUrl(m.title, m.firestoreId), {
+                      state: { from: 'import' },
+                    });
+                  } else {
+                    onSelect(m);
+                  }
+                }}
               >
                 <div className="relative rounded-lg overflow-hidden bg-xmas-card shadow-md h-full flex flex-col">
                   {/* Poster */}
