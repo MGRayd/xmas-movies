@@ -137,6 +137,11 @@ const MovieImportPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-4">
+        <Link to="/movies" className="btn btn-ghost">
+          <i className="fas fa-arrow-left mr-2"></i> Back to Movies
+        </Link>
+      </div>
       <h1 className="font-christmas text-3xl md:text-4xl text-xmas-line mb-6">
         Import Movies
       </h1>
