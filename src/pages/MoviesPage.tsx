@@ -348,7 +348,7 @@ useEffect(() => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/import" className="btn btn-primary">
-              <i className="fas fa-file-import mr-2"></i> Import Movies
+              <i className="fas fa-file-import mr-2"></i> Add Movies
             </Link>
             {movies.length > 0 && (
               <Link to="/random" className="btn btn-primary">

@@ -146,17 +146,17 @@ useEffect(() => {
       <div className="bg-xmas-card rounded-lg shadow-xl p-6 mb-12 border border-xmas-gold border-opacity-30 snow-accumulation snow-accumulation-fast relative">
         <div className="mb-6 text-center">
           <h2 className="font-christmas text-3xl md:text-4xl text-xmas-gold inline-block relative">
-            <span className="relative z-10">Import Your Collection</span>
+            <span className="relative z-10">Create Your Collection</span>
             <span className="absolute -bottom-2 left-0 right-0 h-1 bg-xmas-gold opacity-30 rounded-full"></span>
           </h2>
-          <p className="mt-4 mb-6">Already have a list of Christmas movies? Import them from Excel or search TMDB!</p>
+          <p className="mt-4 mb-6">Add movies to your collection and rate them</p>
           {currentUser ? (
             <Link to="/import" className="btn btn-primary">
-              <i className="fas fa-file-import mr-2"></i> Import Movies
+              <i className="fas fa-file-import mr-2"></i> Add Movies
             </Link>
           ) : (
             <Link to="/login" className="btn btn-primary">
-              <i className="fas fa-sign-in-alt mr-2"></i> Sign In to Import
+              <i className="fas fa-sign-in-alt mr-2"></i> Sign In to Add
             </Link>
           )}
         </div>
@@ -167,8 +167,18 @@ useEffect(() => {
         <div className="h-px bg-gradient-to-r from-transparent via-xmas-gold to-transparent"></div>
       </div>
 
-      <footer className="text-center text-xmas-mute mt-12 pb-8">
+      <footer className="text-center text-xmas-mute mt-12 pb-8 space-y-4">
         <p>© {new Date().getFullYear()} Christmas Movie Database</p>
+        <div className="flex flex-col items-center justify-center gap-2 text-xs md:text-sm text-xmas-mute/80">
+          <img
+            src="/tmdb.svg"
+            alt="TMDB logo"
+            className="h-6 md:h-8 w-auto mb-1"
+          />
+          <p className="max-w-xl px-4">
+            This product uses the TMDB API but is not endorsed or certified by TMDB.
+          </p>
+        </div>
       </footer>
     </div>
   );
