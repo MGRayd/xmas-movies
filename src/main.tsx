@@ -22,6 +22,7 @@ import MovieDetailPage from './pages/MovieDetailPage'
 import MovieImportPage from './pages/MovieImportPage'
 import RandomMoviePage from './pages/RandomMoviePage'
 import ProfilePage from './pages/ProfilePage'
+import AchievementsPage from './pages/AchievementsPage'
 
 // Admin pages
 import AdminLoginPage from './pages/AdminLoginPage'
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
           { path: '/import', element: <MovieImportPage /> },
           { path: '/random', element: <RandomMoviePage /> },
           { path: '/profile', element: <ProfilePage /> },
+          { path: '/achievements', element: <AchievementsPage /> },
         ]
       },
       

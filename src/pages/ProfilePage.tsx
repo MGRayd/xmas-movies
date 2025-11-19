@@ -334,6 +334,10 @@ const ProfilePage: React.FC = () => {
                   <i className="fas fa-random mr-2"></i>
                   Random Movie Picker
                 </Link>
+                <Link to="/achievements" className="btn btn-outline btn-sm">
+                  <i className="fas fa-trophy mr-2"></i>
+                  Achievements
+                </Link>
               </div>
             </div>
 

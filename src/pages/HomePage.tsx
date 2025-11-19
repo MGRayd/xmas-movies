@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { collectionGroup, query, where, getCountFromServer, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, collectionGroup, query, where, getCountFromServer, doc, getDoc, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ACHIEVEMENTS } from '../achievements';
 
 const HomePage: React.FC = () => {
   const { currentUser } = useAuth();
   const [now, setNow] = useState<Date>(new Date());
   const [watchedTotal, setWatchedTotal] = useState<number | null>(null);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<number | null>(null);
+  const totalAchievements = ACHIEVEMENTS.length;
   
 // live clock for countdown
 useEffect(() => {
@@ -45,6 +48,27 @@ useEffect(() => {
   return () => unsub();
 }, []);
 
+// load unlocked achievements count for current user
+useEffect(() => {
+  if (!currentUser) {
+    setUnlockedAchievements(null);
+    return;
+  }
+
+  const load = async () => {
+    try {
+      const col = collection(db, `users/${currentUser.uid}/achievements`);
+      const snap = await getDocs(col);
+      setUnlockedAchievements(snap.size);
+    } catch (e) {
+      console.error('Error loading achievements count', e);
+      setUnlockedAchievements(null);
+    }
+  };
+
+  load();
+}, [currentUser]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -53,7 +77,7 @@ useEffect(() => {
         </h1>
         <p className="text-xl md:text-2xl text-xmas-snow mb-8">Track, rate, and discover your favourite Christmas movies!</p>
         
-        <div className="flex flex-col md:flex-row justify-center gap-6 mb-12">
+        <div className="flex flex-col md:flex-row justify-center gap-6 mb-4 md:mb-6">
           {currentUser ? (
             <>
               <Link 
@@ -67,6 +91,12 @@ useEffect(() => {
                 className="btn btn-primary btn-lg text-xl px-8 py-3 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 border border-xmas-gold border-opacity-30"
               >
                 <i className="fas fa-random mr-2"></i> Random Movie
+              </Link>
+              <Link 
+                to="/achievements" 
+                className="btn btn-primary btn-lg text-xl px-8 py-3 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 border border-xmas-gold border-opacity-30"
+              >
+                <i className="fas fa-trophy mr-2"></i> Achievements
               </Link>
             </>
           ) : (
@@ -115,7 +145,7 @@ useEffect(() => {
       {/* Features section */}
       <div className="bg-xmas-card rounded-lg shadow-xl p-6 mb-12 border border-xmas-gold border-opacity-20 snow-accumulation snow-accumulation-slow relative">
         <h2 className="font-christmas text-3xl text-xmas-line mb-6 text-center">Features</h2>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-4 gap-6">
           <div className="bg-xmas-card bg-opacity-70 p-6 rounded-lg shadow-md border-l-2 border-xmas-line">
             <div className="text-3xl text-xmas-gold mb-4 text-center">
               <i className="fas fa-search"></i>
@@ -138,6 +168,22 @@ useEffect(() => {
             </div>
             <h3 className="font-christmas text-xl text-center mb-3">Random Picker</h3>
             <p className="text-center text-xmas-text text-opacity-80">Can't decide what to watch? Let our random movie picker help!</p>
+          </div>
+          <div className="bg-xmas-card bg-opacity-70 p-6 rounded-lg shadow-md border-l-2 border-xmas-line">
+            <div className="text-3xl text-xmas-gold mb-4 text-center">
+              <i className="fas fa-trophy"></i>
+            </div>
+            <h3 className="font-christmas text-xl text-center mb-3">Achievements</h3>
+            <p className="text-center text-xmas-text text-opacity-80 mb-2">
+              Unlock festive badges as you watch, rate, and explore.
+            </p>
+            {currentUser && (
+              <p className="text-center text-xmas-text text-opacity-80 font-medium">
+                {typeof unlockedAchievements === 'number'
+                  ? `${unlockedAchievements} / ${totalAchievements} unlocked`
+                  : `${totalAchievements} to discover`}
+              </p>
+            )}
           </div>
         </div>
       </div>
