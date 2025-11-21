@@ -5,6 +5,7 @@ import LocalSearchPanel from '../components/imports/LocalSearchPanel';
 import TmdbSearchPanel from '../components/imports/TmdbSearchPanel';
 import ExcelImportWizard from '../components/imports/ExcelImportWizard';
 import MovieImportModal from '../components/imports/MovieImportModal';
+import MovieRequestButton from '../components/MovieRequestButton';
 import { useAuth } from '../contexts/AuthContext';
 import { TMDBMovie } from '../types/movie';
 import { getMovieDetails, formatTMDBMovie } from '../services/tmdbService';
@@ -170,6 +171,10 @@ const MovieImportPage: React.FC = () => {
           <span>{msg.text}</span>
         </div>
       )}
+
+      <div className="mb-4">
+        <MovieRequestButton />
+      </div>
 
       {/* Tabs – show all import options only if admin */}
       {isAdmin && (

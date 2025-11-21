@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +20,9 @@ const AdminDashboardPage: React.FC = () => {
     totalMovies: 0,
     moviesWithSortTitle: 0
   });
+
+  const [requests, setRequests] = useState<any[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
 
   // NEW: Catalogue Builder state
   const [tmdbApiKey, setTmdbApiKey] = useState<string>('');
@@ -78,6 +81,35 @@ const AdminDashboardPage: React.FC = () => {
     }
   }, [isAdmin]);
 
+  useEffect(() => {
+    const fetchRequests = async () => {
+      if (!isAdmin) return;
+
+      setRequestsLoading(true);
+      try {
+        const q = query(
+          collection(db, 'Requests'),
+          where('status', '==', 'pending')
+        );
+        const snapshot = await getDocs(q);
+        const items = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+        setRequests(items);
+      } catch (err) {
+        console.error('Error fetching movie requests:', err);
+        setError('Failed to load movie requests');
+      } finally {
+        setRequestsLoading(false);
+      }
+    };
+
+    if (isAdmin) {
+      fetchRequests();
+    }
+  }, [isAdmin]);
+
   // Handle sort title migration
   const handleUpdateSortTitles = async () => {
     try {
@@ -99,6 +131,25 @@ const AdminDashboardPage: React.FC = () => {
       setError(err.message || 'Failed to update sort titles');
     } finally {
       setMigrationLoading(false);
+    }
+  };
+
+  const handleUpdateRequestStatus = async (
+    requestId: string,
+    newStatus: 'fulfilled' | 'dismissed'
+  ) => {
+    try {
+      setError(null);
+      await updateDoc(doc(db, 'Requests', requestId), {
+        status: newStatus,
+        updatedAt: new Date(),
+      });
+      setRequests(prev => prev.filter(r => r.id !== requestId));
+      setSuccess(`Request marked as ${newStatus}.`);
+      setTimeout(() => setSuccess(null), 4000);
+    } catch (err: any) {
+      console.error('Error updating request status:', err);
+      setError(err.message || 'Failed to update request');
     }
   };
 
@@ -297,6 +348,104 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="text-2xl font-christmas mb-4 text-xmas-gold">Movie Requests</h2>
+        <div className="card bg-xmas-card shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title font-christmas flex items-center gap-2">
+              <i className="fas fa-gift text-primary" />
+              Pending Requests
+            </h2>
+            <p className="text-sm opacity-80 mb-4">
+              These are movies users have asked to be added to the catalogue.
+            </p>
+
+            {requestsLoading ? (
+              <div className="flex justify-center py-8">
+                <span className="loading loading-spinner loading-md" />
+              </div>
+            ) : requests.length === 0 ? (
+              <p className="text-sm opacity-80">No pending requests right now.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="table table-zebra table-sm">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Year</th>
+                      <th>TMDB</th>
+                      <th>Requested By</th>
+                      <th>Notes</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requests.map((req) => {
+                      const createdAt = (req.createdAt as any)?.toDate
+                        ? (req.createdAt as any).toDate()
+                        : req.createdAt;
+                      return (
+                        <tr key={req.id}>
+                          <td>
+                            <div className="font-semibold">{req.title}</div>
+                            {createdAt && (
+                              <div className="text-xs opacity-70">
+                                {new Date(createdAt).toLocaleString()}
+                              </div>
+                            )}
+                          </td>
+                          <td>{req.year || '-'}</td>
+                          <td>
+                            {req.tmdbId && (
+                              <div className="text-xs">ID: {req.tmdbId}</div>
+                            )}
+                            {req.tmdbUrl && (
+                              <a
+                                href={req.tmdbUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="link link-primary text-xs"
+                              >
+                                View TMDB
+                              </a>
+                            )}
+                          </td>
+                          <td>
+                            <div className="text-sm">
+                              {req.userDisplayName || req.userEmail || req.userId}
+                            </div>
+                            {req.userEmail && (
+                              <div className="text-xs opacity-70">{req.userEmail}</div>
+                            )}
+                          </td>
+                          <td className="max-w-xs whitespace-pre-wrap text-xs">
+                            {req.notes || '-'}
+                          </td>
+                          <td className="flex flex-col gap-1">
+                            <button
+                              className="btn btn-xs btn-success"
+                              onClick={() => handleUpdateRequestStatus(req.id, 'fulfilled')}
+                            >
+                              Fulfilled
+                            </button>
+                            <button
+                              className="btn btn-xs btn-ghost"
+                              onClick={() => handleUpdateRequestStatus(req.id, 'dismissed')}
+                            >
+                              Dismiss
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>

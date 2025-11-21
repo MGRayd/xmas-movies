@@ -8,6 +8,7 @@ import { Movie, UserMovie } from '../types/movie';
 import { getUserMovies, getUserMoviesWithDetails } from '../utils/userMovieUtils';
 import { exportUserMoviesToCSV } from '../utils/exportUtils';
 import { updateMoviesWithSortTitles } from '../utils/migrationUtils';
+import MyRequests from '../components/MyRequests';
 
 const ProfilePage: React.FC = () => {
   const { currentUser, userProfile, signOut } = useAuth();
@@ -340,6 +341,8 @@ const ProfilePage: React.FC = () => {
                 </Link>
               </div>
             </div>
+
+            <MyRequests />
 
             {/* ADMIN TOOLS – already admin-only */}
             {isAdmin && (

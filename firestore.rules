@@ -81,6 +81,21 @@ service cloud.firestore {
       // Prevent deletes
       allow delete: if false;
     }
+
+	// Movie Requests collection
+	match /Requests/{requestId} {
+	  // Any signed-in user can create a request for themselves
+	  allow create: if request.auth != null
+	    && request.resource.data.userId == request.auth.uid
+	    && request.resource.data.status == 'pending';
+
+	  // Users can read their own requests; admins can read all
+	  allow read: if request.auth != null
+	    && (resource.data.userId == request.auth.uid || isAdmin());
+
+	  // Only admins can modify or delete requests
+	  allow update, delete: if isAdmin();
+	}
     
     // Admin collection - only admins can access
     match /admins/{adminId} {
