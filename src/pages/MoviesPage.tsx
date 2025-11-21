@@ -64,7 +64,7 @@ useEffect(() => {
     };
 
     fetchMovies();
-  }, [currentUser]);
+  }, [currentUser, location.key]);
   
   // No pagination reset needed
 

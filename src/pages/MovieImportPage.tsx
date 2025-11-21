@@ -11,6 +11,7 @@ import { getMovieDetails, formatTMDBMovie } from '../services/tmdbService';
 import { db } from '../firebase';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { saveUserMovie, getUserMoviesWithDetails } from '../utils/userMovieUtils';
+import { clearMovieCache } from '../utils/cacheUtils';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 
 const MovieImportPage: React.FC = () => {
@@ -123,6 +124,9 @@ const MovieImportPage: React.FC = () => {
         prev.includes(movieId) ? prev : [...prev, movieId]
       );
 
+      // Clear global movie cache so MoviesPage refetches fresh data
+      clearMovieCache();
+
       setMsg({ type: 'success', text: 'Added to your collection!' });
       setShowDetails(false);
       setSelected(null); // close modal
@@ -167,17 +171,17 @@ const MovieImportPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tabs – TMDB & Excel only if admin */}
-      <div className="tabs tabs-boxed mb-6">
-        <button
-          className={`tab ${active === 'local' ? 'tab-active' : ''}`}
-          onClick={() => setActive('local')}
-        >
-          <i className="fas fa-database mr-2" />
-          Local
-        </button>
+      {/* Tabs – show all import options only if admin */}
+      {isAdmin && (
+        <div className="tabs tabs-boxed mb-6">
+          <button
+            className={`tab ${active === 'local' ? 'tab-active' : ''}`}
+            onClick={() => setActive('local')}
+          >
+            <i className="fas fa-database mr-2" />
+            Local
+          </button>
 
-        {isAdmin && (
           <button
             className={`tab ${active === 'tmdb' ? 'tab-active' : ''}`}
             onClick={() => setActive('tmdb')}
@@ -185,9 +189,7 @@ const MovieImportPage: React.FC = () => {
             <i className="fas fa-search mr-2" />
             TMDB
           </button>
-        )}
 
-        {isAdmin && (
           <button
             className={`tab ${active === 'excel' ? 'tab-active' : ''}`}
             onClick={() => setActive('excel')}
@@ -195,8 +197,8 @@ const MovieImportPage: React.FC = () => {
             <i className="fas fa-file-excel mr-2" />
             Excel
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {active === 'local' && (
         <div className="bg-xmas-card p-6 rounded-lg shadow-lg">
