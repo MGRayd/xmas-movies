@@ -329,7 +329,7 @@ const ProfilePage: React.FC = () => {
                 </Link>
                 <Link to="/import" className="btn btn-outline btn-sm">
                   <i className="fas fa-file-import mr-2"></i>
-                  Import Movies
+                  Add Movies
                 </Link>
                 <Link to="/random" className="btn btn-outline btn-sm">
                   <i className="fas fa-random mr-2"></i>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { saveUserMovie } from '../utils/userMovieUtils';
@@ -47,6 +47,30 @@ const MyRequests: React.FC = () => {
           };
         });
         setRequests(items);
+
+        if (currentUser && items.length > 0) {
+          const alreadyAddedIds: string[] = [];
+          for (const req of items) {
+            if (req.status !== 'fulfilled' || !req.tmdbId) continue;
+
+            const moviesRef = collection(db, 'movies');
+            const mq = query(moviesRef, where('tmdbId', '==', req.tmdbId));
+            const msnap = await getDocs(mq);
+            if (msnap.empty) continue;
+
+            const movieDoc = msnap.docs[0];
+            const movieId = movieDoc.id;
+            const userMovieRef = doc(db, `users/${currentUser.uid}/movies`, movieId);
+            const userMovieSnap = await getDoc(userMovieRef);
+            if (userMovieSnap.exists()) {
+              alreadyAddedIds.push(req.id);
+            }
+          }
+
+          if (alreadyAddedIds.length > 0) {
+            setAddedIds(new Set(alreadyAddedIds));
+          }
+        }
       } catch (err: any) {
         console.error('Error loading your movie requests:', err);
         setError(err.message || 'Failed to load your movie requests');
@@ -162,16 +186,22 @@ const MyRequests: React.FC = () => {
                   </td>
                   <td>
                     {req.status === 'fulfilled' && req.tmdbId && (
-                      <button
-                        className={`btn btn-xs ${addedIds.has(req.id) ? 'btn-success' : 'btn-primary'}`}
-                        onClick={() => !addedIds.has(req.id) && handleAddToCollection(req)}
-                        disabled={addingId === req.id || addedIds.has(req.id)}
-                      >
-                        {addingId === req.id && !addedIds.has(req.id) && (
-                          <span className="loading loading-spinner loading-xs mr-1" />
-                        )}
-                        {addedIds.has(req.id) ? 'In collection' : 'Add to my movies'}
-                      </button>
+                      addedIds.has(req.id) ? (
+                        <span className="badge badge-success text-xs">
+                          In collection
+                        </span>
+                      ) : (
+                        <button
+                          className="btn btn-xs btn-primary"
+                          onClick={() => handleAddToCollection(req)}
+                          disabled={addingId === req.id}
+                        >
+                          {addingId === req.id && (
+                            <span className="loading loading-spinner loading-xs mr-1" />
+                          )}
+                          Add to my movies
+                        </button>
+                      )
                     )}
                   </td>
                 </tr>
