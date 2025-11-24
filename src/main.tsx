@@ -24,6 +24,8 @@ import MovieImportPage from './pages/MovieImportPage'
 import RandomMoviePage from './pages/RandomMoviePage'
 import ProfilePage from './pages/ProfilePage'
 import AchievementsPage from './pages/AchievementsPage'
+import PublicWatchlistPage from './pages/PublicWatchlistPage'
+import PublicMoviePage from './pages/PublicMoviePage'
 
 // Admin pages
 import AdminLoginPage from './pages/AdminLoginPage'
@@ -36,6 +38,8 @@ const router = createBrowserRouter([
       // Public routes
       { path: '/', element: <HomePage /> },
       { path: '/login', element: <LoginPage /> },
+      { path: '/u/:slug', element: <PublicWatchlistPage /> },
+      { path: '/u/:slug/m/:movieSlug', element: <PublicMoviePage /> },
       
       // Protected routes
       { 

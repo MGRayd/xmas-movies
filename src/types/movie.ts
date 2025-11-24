@@ -39,6 +39,10 @@ export interface User {
   displayName: string;
   photoURL?: string;
   tmdbApiKey?: string;
+  isPublicWatchlist?: boolean;
+  publicWatchlistName?: string;
+  publicWatchlistTagline?: string;
+  publicWatchlistSlug?: string;
   createdAt: Date;
   lastLoginAt: Date;
 }
