@@ -31,6 +31,7 @@ const AdminDashboardPage: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
   const [progressLabel, setProgressLabel] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (userProfile?.tmdbApiKey) {
@@ -206,6 +207,58 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const handleExportMovies = async () => {
+    setError(null);
+    setSuccess(null);
+    try {
+      setExporting(true);
+      const moviesSnapshot = await getDocs(collection(db, 'movies'));
+      const rows: string[] = [];
+
+      const escapeCsv = (value: any) => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+
+      rows.push(['Title', 'Year'].map(escapeCsv).join(','));
+
+      moviesSnapshot.forEach(docSnap => {
+        const data = docSnap.data() as any;
+        const title = data.title || '';
+        let year = '';
+        if (data.releaseDate) {
+          const d = new Date(data.releaseDate);
+          if (!isNaN(d.getTime())) {
+            year = String(d.getFullYear());
+          }
+        }
+        rows.push([title, year].map(escapeCsv).join(','));
+      });
+
+      const csvContent = rows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'movies_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccess('Movie catalogue exported successfully.');
+    } catch (e: any) {
+      console.error('Error exporting movies:', e);
+      setError(e?.message || 'Failed to export movies');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (adminCheckLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -347,6 +400,34 @@ const AdminDashboardPage: React.FC = () => {
                   <div className="text-sm mt-1 opacity-80">{progressLabel}</div>
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="card bg-xmas-card shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title font-christmas">
+                <i className="fas fa-file-excel text-primary mr-2"></i> Export Movies to Excel
+              </h2>
+              <p className="mb-4">
+                Download the full movie catalogue as a CSV file with title and year columns, suitable for Excel.
+              </p>
+              <button
+                className="btn btn-secondary w-full"
+                onClick={handleExportMovies}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm mr-2" />
+                    Exporting…
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-download mr-2" />
+                    Export Movies
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
