@@ -224,11 +224,12 @@ const AdminDashboardPage: React.FC = () => {
         return str;
       };
 
-      rows.push(['Title', 'Year'].map(escapeCsv).join(','));
+      rows.push(['Title', 'TMDB ID', 'Year'].map(escapeCsv).join(','));
 
       moviesSnapshot.forEach(docSnap => {
         const data = docSnap.data() as any;
         const title = data.title || '';
+        const tmdbId = data.tmdbId ?? '';
         let year = '';
         if (data.releaseDate) {
           const d = new Date(data.releaseDate);
@@ -236,7 +237,7 @@ const AdminDashboardPage: React.FC = () => {
             year = String(d.getFullYear());
           }
         }
-        rows.push([title, year].map(escapeCsv).join(','));
+        rows.push([title, tmdbId, year].map(escapeCsv).join(','));
       });
 
       const csvContent = rows.join('\n');
